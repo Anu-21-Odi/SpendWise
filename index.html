@@ -7,22 +7,28 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="navbar">
-    <div class="container nav-container">
-      <a href="" class="logo">Spend<span>Wise</span></a>
+  
+<nav class="navbar">
+  <div class="container nav-container">
+    <a href="#" class="logo">Spend<span>Wise</span></a>
 
-      <nav class="nav-links">
-        <a href="#">Features</a>
-        <a href="#">analytics</a>
-        <a href="#">Pricing</a>
-      </nav>
+    <ul class="nav-links nav-menu">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#stats">Stats</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+    </ul>
 
-      <div class="auth-buttons">
-        <a href="login.html" class="btn btn-outline">Log In</a>
-        <a href="signup.html" class="btn btn-primary">Get Started</a>
-      </div>
-    </div>
-  </header>
+    <a href="#" class="btn btn-primary nav-cta">Get Started</a>
+
+    <!-- Hamburger Toggle Button -->
+    <button class="mobile-menu-toggle" aria-label="Toggle navigation">
+      <span class="hamburger-bar"></span>
+      <span class="hamburger-bar"></span>
+      <span class="hamburger-bar"></span>
+    </button>
+  </div>
+</nav>
+
 <section class="hero">
 <div class="container hero-container" >
 <div class="hero-content">
@@ -46,5 +52,170 @@
 </div>
 </div>
 </section>
+
+<!-- Added id="features" -->
+<section id="features" class="features">
+  <div class="container">
+    <div class="features-header">
+  <h2>Everything You Need to Manage Money</h2>
+  <p>Powerful features designed to give you total control over your financial future.</p>
+</div>
+<div class="features-grid">
+  <!-- Card 1 -->
+  <div class="feature-card">
+    <div class="feature-icon">📊</div>
+    <h3>Real-time Analytics</h3>
+    <p>Track your spending habits as they happen with automated category tagging and visual reports.</p>
+  </div>
+
+  <!-- Card 2 -->
+  <div class="feature-card">
+    <div class="feature-icon">🎯</div>
+    <h3>Smart Budgeting</h3>
+    <p>Set custom monthly spending limits and let our intelligent engine keep you on track.</p>
+  </div>
+
+  <!-- Card 3 -->
+  <div class="feature-card">
+    <div class="feature-icon">🔒</div>
+    <h3>Bank-Grade Security</h3>
+    <p>Your data is protected with 256-bit AES encryption and multi-factor authentication.</p>
+  </div>
+</div>
+  </div>
+</section>
+
+<!-- Added id="stats" -->
+<section id="stats" class="stats">
+  <div class="container stats-container">
+    <div class="stat-item">
+      <h3>$2M+</h3>
+      <p>Transactions Tracked</p>
+    </div>
+    <div class="stat-item">
+      <h3>99.9%</h3>
+      <p>System Uptime</p>
+    </div>
+    <div class="stat-item">
+      <h3>50k+</h3>
+      <p>Active Users</p>
+    </div>
+    <div class="stat-item">
+      <h3>4.9★</h3>
+      <p>App Store Rating</p>
+    </div>
+  </div>
+</section>
+
+<!-- Added id="pricing" -->
+<section id="pricing" class="pricing">
+  <div class="container">
+    <div class="pricing-header">
+      <h2>Simple, Transparent Pricing</h2>
+      <p>Choose the plan that best fits your financial journey. No hidden fees.</p>
+    </div>
+
+    <div class="pricing-grid">
+      <!-- Starter Plan -->
+      <div class="pricing-card">
+        <h3>Starter</h3>
+        <p class="plan-desc">Perfect for personal finance tracking</p>
+        <div class="price">$0<span>/month</span></div>
+        <ul class="features-list">
+          <li>✓ Basic expense tracking</li>
+          <li>✓ Up to 2 connected accounts</li>
+          <li>✓ Monthly budget reports</li>
+          <li>✓ Standard support</li>
+        </ul>
+        <a href="#" class="btn btn-pill-outline">Get Started</a>
+      </div>
+
+      <!-- Pro Plan (Featured) -->
+      <div class="pricing-card featured">
+        <div class="badge">Most Popular</div>
+        <h3>Pro</h3>
+        <p class="plan-desc">For serious savers and investors</p>
+        <div class="price">$12<span>/month</span></div>
+        <ul class="features-list">
+          <li>✓ Unlimited account connections</li>
+          <li>✓ Real-time automated tagging</li>
+          <li>✓ Advanced custom budgets</li>
+          <li>✓ Investment & crypto tracking</li>
+          <li>✓ Priority 24/7 support</li>
+        </ul>
+        <a href="#" class="btn btn-pill-primary">Start 14-Day Free Trial</a>
+      </div>
+
+      <!-- Enterprise Plan -->
+      <div class="pricing-card">
+        <h3>Business</h3>
+        <p class="plan-desc">For teams and business owners</p>
+        <div class="price">$29<span>/month</span></div>
+        <ul class="features-list">
+          <li>✓ Everything in Pro</li>
+          <li>✓ Multi-user collaboration</li>
+          <li>✓ Custom export & API access</li>
+          <li>✓ Dedicated account manager</li>
+        </ul>
+        <a href="#" class="btn btn-pill-outline">Contact Sales</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-banner">
+  <div class="container">
+    <div class="cta-card">
+      <h2>Ready to Take Control of Your Finances?</h2>
+      <p>Join over 50,000 users managing their spending and savings with SpendWise.</p>
+      <div class="cta-buttons">
+        <a href="#" class="btn btn-pill-light">Get Started Free</a>
+        <a href="#" class="btn btn-pill-outline-light">Talk to Sales</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer-container">
+    <div class="footer-brand">
+      <a href="#" class="logo">Spend<span>Wise</span></a>
+      <p>Take control of your spending with smarter budgets, real-time insights, and confidence in every financial decision.</p>
+    </div>
+
+    <div class="footer-col">
+      <h4>Platform</h4>
+      <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#stats">Stats</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Security</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <ul>
+        <li><a href="#">Help Center</a></li>
+        <li><a href="#">Guides</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container footer-bottom">
+    <p>© 2026 SpendWise. All rights reserved.</p>
+  </div>
+</footer>
+
+<script src="script.js"></script>
 </body>
 </html>
