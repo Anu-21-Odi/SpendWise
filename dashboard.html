@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpendWise - Personal Finance Tracker</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <h2 class="brand-logo">Spend<span>Wise</span></h2>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-link active" data-target="dashboardSection">
+          <span class="nav-icon">🏠</span> Dashboard
+        </a>
+        <a href="#" class="nav-link" data-target="transactionsSection">
+          <span class="nav-icon">💳</span> Transactions
+        </a>
+        <a href="#" class="nav-link" data-target="analyticsSection">
+          <span class="nav-icon">📊</span> Analytics
+        </a>
+        <a href="#" class="nav-link" data-target="settingsSection">
+          <span class="nav-icon">⚙️</span> Settings
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Dashboard Body -->
+    <main class="main-content">
+      <!-- Top Header -->
+      <header class="dashboard-header">
+        <div>
+          <h1 id="pageTitle">Dashboard</h1>
+          <p class="subtitle" id="pageSubtitle">Welcome back! Here is your financial summary.</p>
+        </div>
+        <div class="header-actions">
+          <!-- Currency Selector Dropdown -->
+          <select id="currencySelect" class="currency-dropdown">
+            <option value="$">USD ($)</option>
+            <option value="€">EUR (€)</option>
+            <option value="£">GBP (£)</option>
+            <option value="₦">NGN (₦)</option>
+            <option value="₹">INR (₹)</option>
+          </select>
+          <button id="openModalBtn" class="btn btn-primary">+ Add Transaction</button>
+        </div>
+      </header>
+
+      <!-- SECTION 1: DASHBOARD VIEW -->
+      <div id="dashboardSection" class="content-section active">
+        <!-- Summary Metrics Grid -->
+        <section class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Total Balance</span>
+            <h3 id="totalBalance">$0.00</h3>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Total Income</span>
+            <h3 id="totalIncome" class="text-success">+$0.00</h3>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Total Expenses</span>
+            <h3 id="totalExpenses" class="text-danger">-$0.00</h3>
+          </div>
+        </section>
+
+        <!-- Dashboard Layout Grid: Visual Chart + Recent Preview -->
+        <div class="dashboard-grid">
+          <!-- Expense Breakdown Visual Card -->
+          <section class="card">
+            <div class="card-header">
+              <h2>Expense Breakdown</h2>
+            </div>
+            <div style="position: relative; height: 260px; width: 100%; display: flex; align-items: center; justify-content: center;">
+              <canvas id="expenseChart"></canvas>
+            </div>
+          </section>
+
+          <!-- Quick Recent Activity Preview -->
+          <section class="card">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+              <h2>Recent Activity</h2>
+              <a href="#" id="viewAllTxBtn" style="color: var(--primary); font-size: 0.875rem; text-decoration: none; font-weight: 500;">
+                View All →
+              </a>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th class="text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardRecentList">
+                  <!-- Latest 4 transactions populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- SECTION 2: TRANSACTIONS VIEW -->
+      <div id="transactionsSection" class="content-section">
+        <!-- Full Transaction History Table Card -->
+        <section class="card">
+          <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <h2>All Transactions</h2>
+            
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+              <!-- Search Input Bar -->
+              <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Search description..." 
+                class="form-control"
+                style="padding: 0.4rem 0.75rem; font-size: 0.85rem;"
+              />
+
+              <!-- Category Filter Dropdown -->
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label for="categoryFilter" style="font-size: 0.875rem; color: var(--text-muted); font-weight: 500;">Filter:</label>
+                <select id="categoryFilter" class="currency-dropdown" style="padding: 0.4rem 0.6rem; font-size: 0.85rem;">
+                  <option value="All">All Categories</option>
+                  <option value="Food & Dining">Food & Dining</option>
+                  <option value="Salary">Salary</option>
+                  <option value="Utilities">Utilities</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Shopping">Shopping</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Category</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th class="text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="transactionList">
+                <!-- Dynamic rows via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- SECTION 3: ANALYTICS VIEW -->
+      <div id="analyticsSection" class="content-section">
+        <section class="card">
+          <h2>Analytics</h2>
+          <p style="color: var(--text-muted); margin-top: 0.5rem;">Detailed financial reports and spending trends will appear here.</p>
+        </section>
+      </div>
+
+      <!-- SECTION 4: SETTINGS VIEW -->
+      <div id="settingsSection" class="content-section">
+        <section class="card">
+          <h2 style="margin-bottom: 1rem;">Settings</h2>
+          <div class="setting-item">
+            <div>
+              <h3>Appearance Theme</h3>
+              <p style="color: var(--text-muted); font-size: 0.875rem;">Choose between light and dark color modes for your workspace.</p>
+            </div>
+            <select id="themeSelect" class="currency-dropdown" style="padding: 0.5rem; font-size: 0.9rem;">
+              <option value="light">☀️ Light Mode</option>
+              <option value="dark">🌙 Dark Mode</option>
+            </select>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add / Edit Transaction Modal -->
+  <div id="transactionModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add New Transaction</h3>
+        <button type="button" id="closeModalBtn" class="close-btn">&times;</button>
+      </div>
+      <form id="transactionForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="txDescription">Description</label>
+            <input type="text" id="txDescription" class="form-control" placeholder="e.g. Salary, Rent, Coffee" required>
+          </div>
+          <div class="form-group">
+            <label for="txAmount">Amount</label>
+            <input type="number" step="0.01" id="txAmount" class="form-control" placeholder="0.00" required>
+          </div>
+          <div class="form-group">
+            <label for="txType">Type</label>
+            <select id="txType" class="form-control" required>
+              <option value="expense">Expense</option>
+              <option value="income">Income</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="txCategory">Category</label>
+            <select id="txCategory" class="form-control" required>
+              <option value="Food & Dining">Food & Dining</option>
+              <option value="Salary">Salary</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Shopping">Shopping</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="txDate">Date</label>
+            <input type="date" id="txDate" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="cancelBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="submitModalBtn" class="btn btn-primary">Add Transaction</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Chart.js Library via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
