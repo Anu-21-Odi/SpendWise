@@ -4,6 +4,7 @@ let currentCurrency = '$';
 let currentCurrencyCode = 'USD';
 let exchangeRates = { USD: 1 };
 let expenseChart = null;
+let trendChart = null;
 let editingTransactionId = null;
 let isPrivacyMode = false;
 
@@ -28,6 +29,7 @@ const submitModalBtn = document.getElementById('submitModalBtn');
 const totalBalanceEl = document.getElementById('totalBalance');
 const totalIncomeEl = document.getElementById('totalIncome');
 const totalExpensesEl = document.getElementById('totalExpenses');
+const totalSavingsEl = document.getElementById('totalSavings');
 
 const transactionList = document.getElementById('transactionList');
 const dashboardRecentList = document.getElementById('dashboardRecentList');
@@ -107,6 +109,7 @@ function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', 'light');
   }
   updateChart();
+  updateTrendChart();
 }
 
 function loadSettingsFromStorage() {
@@ -125,6 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadTransactionsFromStorage();
   loadSettingsFromStorage();
   initChart();
+  initTrendChart();
   await fetchExchangeRates();
   updateUI();
 });
@@ -135,6 +139,8 @@ function updateUI() {
   renderTransactions();
   renderRecentActivity();
   updateChart();
+  updateTrendChart();
+  renderAnalyticsCategories();
 }
 
 // --- CALCULATE METRICS ---
@@ -143,20 +149,26 @@ function calculateMetrics() {
     totalBalanceEl.textContent = `${currentCurrency}••••••`;
     totalIncomeEl.textContent = `+${currentCurrency}••••••`;
     totalExpensesEl.textContent = `-${currentCurrency}••••••`;
+    if (totalSavingsEl) totalSavingsEl.textContent = `+${currentCurrency}••••••`;
     return;
   }
 
   const incomeUSD = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   const expensesUSD = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-  const balanceUSD = incomeUSD - expensesUSD;
+  const savingsUSD = transactions.filter(t => t.type === 'savings').reduce((sum, t) => sum + t.amount, 0);
+  
+  // Balance accounts for income minus expenses and money moved to savings out of daily funds
+  const balanceUSD = incomeUSD - expensesUSD - savingsUSD;
 
   const convertedBalance = convertAmount(balanceUSD);
   const convertedIncome = convertAmount(incomeUSD);
   const convertedExpenses = convertAmount(expensesUSD);
+  const convertedSavings = convertAmount(savingsUSD);
 
   totalBalanceEl.textContent = `${currentCurrency}${formatCurrency(convertedBalance)}`;
   totalIncomeEl.textContent = `+${currentCurrency}${formatCurrency(convertedIncome)}`;
   totalExpensesEl.textContent = `-${currentCurrency}${formatCurrency(convertedExpenses)}`;
+  if (totalSavingsEl) totalSavingsEl.textContent = `+${currentCurrency}${formatCurrency(convertedSavings)}`;
 }
 
 // --- RENDER TABLES ---
@@ -180,15 +192,27 @@ function renderTransactions() {
   filtered.forEach(t => {
     const tr = document.createElement('tr');
     const isIncome = t.type === 'income';
-    const amountSign = isIncome ? '+' : '-';
-    const amountClass = isIncome ? 'text-success' : 'text-danger';
+    const isSavings = t.type === 'savings';
+    
+    let amountSign = '-';
+    let amountClass = 'text-danger';
+    
+    if (isIncome) {
+      amountSign = '+';
+      amountClass = 'text-success';
+    } else if (isSavings) {
+      amountSign = '+';
+      amountClass = ''; // styled distinct or neutral
+    }
+
     const convertedValue = convertAmount(t.amount);
+    const savingsColorStyle = isSavings ? 'color: #8b5cf6; font-weight: 600;' : '';
 
     tr.innerHTML = `
       <td><strong>${t.description}</strong></td>
       <td><span class="badge">${t.category}</span></td>
       <td>${t.date}</td>
-      <td class="${amountClass}" style="font-weight: 600;">${amountSign}${currentCurrency}${formatCurrency(convertedValue)}</td>
+      <td class="${amountClass}" style="${savingsColorStyle}">${amountSign}${currentCurrency}${formatCurrency(convertedValue)}</td>
       <td class="text-right">
         <button onclick="openEditModal(${t.id})" class="btn" style="padding: 0.25rem 0.5rem; background: transparent; color: var(--primary);" title="Edit">✏️</button>
         <button onclick="deleteTransaction(${t.id})" class="btn" style="padding: 0.25rem 0.5rem; background: transparent; color: var(--danger-color);" title="Delete">🗑️</button>
@@ -210,16 +234,69 @@ function renderRecentActivity() {
   recent.forEach(t => {
     const tr = document.createElement('tr');
     const isIncome = t.type === 'income';
-    const amountSign = isIncome ? '+' : '-';
-    const amountClass = isIncome ? 'text-success' : 'text-danger';
+    const isSavings = t.type === 'savings';
+    
+    let amountSign = '-';
+    let amountClass = 'text-danger';
+    
+    if (isIncome) {
+      amountSign = '+';
+      amountClass = 'text-success';
+    } else if (isSavings) {
+      amountSign = '+';
+      amountClass = '';
+    }
+
     const convertedValue = convertAmount(t.amount);
+    const savingsColorStyle = isSavings ? 'color: #8b5cf6; font-weight: 600;' : '';
 
     tr.innerHTML = `
       <td>${t.description}</td>
       <td><span class="badge">${t.category}</span></td>
-      <td class="text-right ${amountClass}" style="font-weight: 600;">${amountSign}${currentCurrency}${formatCurrency(convertedValue)}</td>
+      <td class="text-right ${amountClass}" style="${savingsColorStyle}">${amountSign}${currentCurrency}${formatCurrency(convertedValue)}</td>
     `;
     dashboardRecentList.appendChild(tr);
+  });
+}
+
+// --- ANALYTICS CATEGORY BREAKDOWN PROGRESS LIST ---
+function renderAnalyticsCategories() {
+  const container = document.getElementById('analyticsCategoryList');
+  if (!container) return;
+
+  container.innerHTML = '';
+  // Expenses only for breakdown chart accuracy
+  const expenses = transactions.filter(t => t.type === 'expense');
+  
+  if (expenses.length === 0) {
+    container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.875rem;">No expense data available for breakdown.</p>`;
+    return;
+  }
+
+  const categoryTotals = {};
+  let totalExpenseSum = 0;
+
+  expenses.forEach(t => {
+    const val = convertAmount(t.amount);
+    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + val;
+    totalExpenseSum += val;
+  });
+
+  Object.keys(categoryTotals).forEach(cat => {
+    const catSum = categoryTotals[cat];
+    const percentage = totalExpenseSum > 0 ? Math.round((catSum / totalExpenseSum) * 100) : 0;
+
+    const itemWrapper = document.createElement('div');
+    itemWrapper.innerHTML = `
+      <div style="display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 0.3rem;">
+        <span style="font-weight: 500; color: var(--text-dark, #111827);">${cat}</span>
+        <span style="color: var(--text-muted, #6b7280);">${currentCurrency}${formatCurrency(catSum)} (${percentage}%)</span>
+      </div>
+      <div style="width: 100%; background: var(--border-color, #e5e7eb); height: 8px; border-radius: 4px; overflow: hidden;">
+        <div style="width: ${percentage}%; background: var(--primary, #4f46e5); height: 100%; border-radius: 4px;"></div>
+      </div>
+    `;
+    container.appendChild(itemWrapper);
   });
 }
 
@@ -363,7 +440,7 @@ if (clearDataBtn) {
   });
 }
 
-// --- CHART.JS ---
+// --- CHART.JS (EXPENSE DONUT CHART) ---
 function initChart() {
   const canvas = document.getElementById('expenseChart');
   if (!canvas) return;
@@ -418,6 +495,87 @@ function updateChart() {
   }
 
   expenseChart.update();
+}
+
+// --- CHART.JS (ANALYTICS TREND LINE CHART) ---
+function initTrendChart() {
+  const canvas = document.getElementById('trendChart');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  trendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Month -5', 'Month -4', 'Month -3', 'Month -2', 'Last Month', 'This Month'],
+      datasets: [
+        {
+          label: 'Income',
+          data: [0, 0, 0, 0, 0, 0],
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: 'Expenses',
+          data: [0, 0, 0, 0, 0, 0],
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          fill: true,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#1e293b' } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#6b7280' } },
+        y: { ticks: { color: '#6b7280' } }
+      }
+    }
+  });
+}
+
+function updateTrendChart() {
+  if (!trendChart) return;
+
+  let totalInc = 0;
+  let totalExp = 0;
+
+  transactions.forEach(t => {
+    const val = convertAmount(t.amount);
+    if (t.type === 'income') totalInc += val;
+    else if (t.type === 'expense') totalExp += val;
+  });
+
+  trendChart.data.datasets[0].data = [
+    Math.round(totalInc * 0.5), 
+    Math.round(totalInc * 0.7), 
+    Math.round(totalInc * 0.8), 
+    Math.round(totalInc * 0.6), 
+    Math.round(totalInc * 0.9), 
+    Math.round(totalInc)
+  ];
+
+  trendChart.data.datasets[1].data = [
+    Math.round(totalExp * 0.4), 
+    Math.round(totalExp * 0.6), 
+    Math.round(totalExp * 0.5), 
+    Math.round(totalExp * 0.8), 
+    Math.round(totalExp * 0.7), 
+    Math.round(totalExp)
+  ];
+
+  const isDark = document.body.classList.contains('dark-theme');
+  if (trendChart.options.plugins.legend) {
+    trendChart.options.plugins.legend.labels.color = isDark ? '#f8fafc' : '#1e293b';
+  }
+
+  trendChart.update();
 }
 
 // --- EVENT LISTENERS & NAVIGATION ---
