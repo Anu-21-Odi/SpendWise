@@ -8,10 +8,16 @@
 </head>
 <body>
 
+  <!-- Backdrop overlay for mobile drawer -->
+  <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
   <div class="app-layout">
-    <!-- Sidebar Navigation -->
-    <aside class="sidebar">
-      <h2 class="brand-logo">Spend<span>Wise</span></h2>
+    <!-- Sidebar Navigation Drawer -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2 class="brand-logo">Spend<span>Wise</span></h2>
+        <button id="closeSidebarBtn" class="icon-btn close-sidebar-btn" aria-label="Close navigation">&times;</button>
+      </div>
       <nav class="sidebar-nav">
         <a href="#" class="nav-link active" data-target="dashboardSection">
           <span class="nav-icon">🏠</span> Dashboard
@@ -32,10 +38,17 @@
     <main class="main-content">
       <!-- Top Header -->
       <header class="dashboard-header">
-        <div>
-          <h1 id="pageTitle">Dashboard</h1>
-          <p class="subtitle" id="pageSubtitle">Welcome back! Here is your financial summary.</p>
+        <div class="header-title-container">
+          <!-- Mobile Hamburger Toggle -->
+          <button id="menuToggleBtn" class="icon-btn menu-toggle-btn" aria-label="Open navigation">
+            ☰
+          </button>
+          <div>
+            <h1 id="pageTitle">Dashboard</h1>
+            <p class="subtitle" id="pageSubtitle">Welcome back! Here is your financial summary.</p>
+          </div>
         </div>
+
         <div class="header-actions">
           <!-- Currency Selector Dropdown -->
           <select id="currencySelect" class="currency-dropdown">
@@ -74,7 +87,7 @@
             <div class="card-header">
               <h2>Expense Breakdown</h2>
             </div>
-            <div style="position: relative; height: 260px; width: 100%; display: flex; align-items: center; justify-content: center;">
+            <div class="chart-container" style="position: relative; height: 260px; width: 100%;">
               <canvas id="expenseChart"></canvas>
             </div>
           </section>
@@ -97,7 +110,7 @@
                   </tr>
                 </thead>
                 <tbody id="dashboardRecentList">
-                  <!-- Latest 4 transactions populated dynamically -->
+                  <!-- Latest transactions dynamic rows -->
                 </tbody>
               </table>
             </div>
@@ -107,13 +120,11 @@
 
       <!-- SECTION 2: TRANSACTIONS VIEW -->
       <div id="transactionsSection" class="content-section">
-        <!-- Full Transaction History Table Card -->
         <section class="card">
           <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
             <h2>All Transactions</h2>
             
             <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-              <!-- Search Input Bar -->
               <input 
                 type="text" 
                 id="searchInput" 
@@ -122,7 +133,6 @@
                 style="padding: 0.4rem 0.75rem; font-size: 0.85rem;"
               />
 
-              <!-- Category Filter Dropdown -->
               <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <label for="categoryFilter" style="font-size: 0.875rem; color: var(--text-muted); font-weight: 500;">Filter:</label>
                 <select id="categoryFilter" class="currency-dropdown" style="padding: 0.4rem 0.6rem; font-size: 0.85rem;">
@@ -149,7 +159,7 @@
                 </tr>
               </thead>
               <tbody id="transactionList">
-                <!-- Dynamic rows via JavaScript -->
+                <!-- Dynamic rows -->
               </tbody>
             </table>
           </div>
@@ -166,17 +176,68 @@
 
       <!-- SECTION 4: SETTINGS VIEW -->
       <div id="settingsSection" class="content-section">
-        <section class="card">
-          <h2 style="margin-bottom: 1rem;">Settings</h2>
-          <div class="setting-item">
+        <!-- 1. General Preferences -->
+        <section class="card" style="margin-bottom: 1.5rem;">
+          <h2>General Preferences</h2>
+          
+          <div class="setting-item" style="margin-top: 1rem;">
             <div>
               <h3>Appearance Theme</h3>
-              <p style="color: var(--text-muted); font-size: 0.875rem;">Choose between light and dark color modes for your workspace.</p>
+              <p class="subtitle">Choose between light and dark color modes.</p>
             </div>
-            <select id="themeSelect" class="currency-dropdown" style="padding: 0.5rem; font-size: 0.9rem;">
+            <select id="themeSelect" class="currency-dropdown">
               <option value="light">☀️ Light Mode</option>
               <option value="dark">🌙 Dark Mode</option>
             </select>
+          </div>
+
+          <div class="setting-item" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <div>
+              <h3>Privacy Mode</h3>
+              <p class="subtitle">Mask financial amounts on dashboard summary cards.</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="privacyToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </section>
+
+        <!-- 2. Data Backup & Export -->
+        <section class="card" style="margin-bottom: 1.5rem;">
+          <h2>Data Management</h2>
+
+          <div class="setting-item" style="margin-top: 1rem;">
+            <div>
+              <h3>Export Transactions (CSV)</h3>
+              <p class="subtitle">Download transaction history as a spreadsheet-compatible file.</p>
+            </div>
+            <button id="exportCsvBtn" class="btn btn-secondary">📥 Export CSV</button>
+          </div>
+
+          <div class="setting-item" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <div>
+              <h3>Backup / Restore Data</h3>
+              <p class="subtitle">Export complete JSON backup or restore from an existing file.</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button id="exportJsonBtn" class="btn btn-secondary">💾 Save Backup</button>
+              <input type="file" id="importJsonInput" accept=".json" style="display: none;">
+              <button id="importJsonBtn" class="btn btn-secondary" onclick="document.getElementById('importJsonInput').click()">📤 Restore</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Danger Zone -->
+        <section class="card">
+          <h2 style="color: var(--danger-color);">Danger Zone</h2>
+
+          <div class="setting-item" style="margin-top: 1rem;">
+            <div>
+              <h3>Reset Dashboard</h3>
+              <p class="subtitle">Permanently clear all saved transactions and preferences.</p>
+            </div>
+            <button id="clearDataBtn" class="btn" style="background-color: var(--danger-color); color: #fff;">Clear All Data</button>
           </div>
         </section>
       </div>
@@ -230,7 +291,7 @@
     </div>
   </div>
 
-  <!-- Chart.js Library via CDN -->
+  <!-- Script Imports -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="dashboard.js"></script>
 </body>

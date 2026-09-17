@@ -1,449 +1,489 @@
-document.addEventListener('DOMContentLoaded', () => {
-  // DOM Elements
-  const modal = document.getElementById('transactionModal');
-  const modalTitle = document.getElementById('modalTitle');
-  const submitModalBtn = document.getElementById('submitModalBtn');
-  const openModalBtn = document.getElementById('openModalBtn');
-  const closeModalBtn = document.getElementById('closeModalBtn');
-  const cancelBtn = document.getElementById('cancelBtn');
-  const transactionForm = document.getElementById('transactionForm');
-  const transactionList = document.getElementById('transactionList');
-  const dashboardRecentList = document.getElementById('dashboardRecentList');
-  const viewAllTxBtn = document.getElementById('viewAllTxBtn');
-  const currencySelect = document.getElementById('currencySelect');
-  const categoryFilter = document.getElementById('categoryFilter');
-  const searchInput = document.getElementById('searchInput');
-  const themeSelect = document.getElementById('themeSelect');
+// --- STATE MANAGEMENT ---
+let transactions = [];
+let currentCurrency = '$';
+let currentCurrencyCode = 'USD';
+let exchangeRates = { USD: 1 };
+let expenseChart = null;
+let editingTransactionId = null;
+let isPrivacyMode = false;
 
-  const totalBalanceEl = document.getElementById('totalBalance');
-  const totalIncomeEl = document.getElementById('totalIncome');
-  const totalExpensesEl = document.getElementById('totalExpenses');
+// Currency symbol mapping
+const currencyMap = {
+  '$': 'USD',
+  '€': 'EUR',
+  '£': 'GBP',
+  '₦': 'NGN',
+  '₹': 'INR'
+};
 
-  const pageTitle = document.getElementById('pageTitle');
-  const pageSubtitle = document.getElementById('pageSubtitle');
-  const navLinks = document.querySelectorAll('.nav-link');
-  const contentSections = document.querySelectorAll('.content-section');
+// --- DOM ELEMENTS ---
+const openModalBtn = document.getElementById('openModalBtn');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+const transactionModal = document.getElementById('transactionModal');
+const transactionForm = document.getElementById('transactionForm');
+const modalTitle = document.getElementById('modalTitle');
+const submitModalBtn = document.getElementById('submitModalBtn');
 
-  // Chart Instance variable
-  let expenseChartInstance = null;
+const totalBalanceEl = document.getElementById('totalBalance');
+const totalIncomeEl = document.getElementById('totalIncome');
+const totalExpensesEl = document.getElementById('totalExpenses');
 
-  // Exchange Rates (Base: USD = 1.0)
-  const exchangeRates = {
-    '$': 1.0,
-    '€': 0.92,
-    '£': 0.79,
-    '₦': 1500.0,
-    '₹': 83.0
-  };
+const transactionList = document.getElementById('transactionList');
+const dashboardRecentList = document.getElementById('dashboardRecentList');
+const currencySelect = document.getElementById('currencySelect');
+const categoryFilter = document.getElementById('categoryFilter');
+const searchInput = document.getElementById('searchInput');
 
-  // Header Titles Map
-  const headersMap = {
-    dashboardSection: {
-      title: 'Dashboard',
-      subtitle: 'Welcome back! Here is your financial summary.'
-    },
-    transactionsSection: {
-      title: 'Transactions',
-      subtitle: 'Manage and search through all your income and expenses.'
-    },
-    analyticsSection: {
-      title: 'Analytics',
-      subtitle: 'Analyze your spending behavior over time.'
-    },
-    settingsSection: {
-      title: 'Settings',
-      subtitle: 'Manage your app preferences and configurations.'
+// Settings Controls
+const clearDataBtn = document.getElementById('clearDataBtn');
+const themeSelect = document.getElementById('themeSelect');
+const privacyToggle = document.getElementById('privacyToggle');
+const exportCsvBtn = document.getElementById('exportCsvBtn');
+const exportJsonBtn = document.getElementById('exportJsonBtn');
+const importJsonInput = document.getElementById('importJsonInput');
+
+// Navigation Elements
+const navLinks = document.querySelectorAll('.nav-link');
+const contentSections = document.querySelectorAll('.content-section');
+const viewAllTxBtn = document.getElementById('viewAllTxBtn');
+const pageTitle = document.getElementById('pageTitle');
+const pageSubtitle = document.getElementById('pageSubtitle');
+const menuToggleBtn = document.getElementById('menuToggleBtn');
+const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+const sidebar = document.getElementById('sidebar');
+const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+// --- FORMATTING HELPERS ---
+function formatCurrency(amount) {
+  return amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function convertAmount(amountInUSD) {
+  const rate = exchangeRates[currentCurrencyCode] || 1;
+  return amountInUSD * rate;
+}
+
+// Fetch live rates from free API
+async function fetchExchangeRates() {
+  try {
+    const response = await fetch('https://open.er-api.com/v6/latest/USD');
+    const data = await response.json();
+    if (data && data.rates) {
+      exchangeRates = data.rates;
     }
-  };
+  } catch (error) {
+    console.error('Failed to fetch exchange rates, using default:', error);
+  }
+}
 
-  // State Variables
-  let editingTransactionId = null;
-  let searchQuery = '';
-  let currentCurrency = currencySelect?.value || '$';
-  let selectedCategory = categoryFilter?.value || 'All';
+// --- STORAGE MANAGEMENT ---
+function saveTransactionsToStorage() {
+  localStorage.setItem('spendwise_transactions', JSON.stringify(transactions));
+}
 
-  // Load Theme Preference
+function loadTransactionsFromStorage() {
+  const savedData = localStorage.getItem('spendwise_transactions');
+  if (savedData) {
+    try {
+      transactions = JSON.parse(savedData);
+    } catch (e) {
+      console.error('Failed to parse transactions:', e);
+      transactions = [];
+    }
+  }
+}
+
+// --- THEME & PRIVACY ---
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.body.classList.add('dark-theme');
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else {
+    document.body.classList.remove('dark-theme');
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+  updateChart();
+}
+
+function loadSettingsFromStorage() {
+  // Theme
   const savedTheme = localStorage.getItem('spendwise_theme') || 'light';
-  document.documentElement.setAttribute('data-theme', savedTheme);
+  applyTheme(savedTheme);
   if (themeSelect) themeSelect.value = savedTheme;
 
-  themeSelect?.addEventListener('change', (e) => {
-    const newTheme = e.target.value;
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('spendwise_theme', newTheme);
-    updateDashboard(); // Re-render chart text colors for dark/light contrast
-  });
+  // Privacy
+  isPrivacyMode = localStorage.getItem('spendwise_privacy') === 'true';
+  if (privacyToggle) privacyToggle.checked = isPrivacyMode;
+}
 
-  // Load Saved LocalStorage Data
-  let transactions = [];
-  try {
-    const savedData = localStorage.getItem('spendwise_transactions');
-    transactions = savedData ? JSON.parse(savedData) : [];
-    if (!Array.isArray(transactions)) transactions = [];
-  } catch (e) {
-    console.error('Error reading localStorage:', e);
-    transactions = [];
+// --- INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', async () => {
+  loadTransactionsFromStorage();
+  loadSettingsFromStorage();
+  initChart();
+  await fetchExchangeRates();
+  updateUI();
+});
+
+// --- UI REFRESH ROUTINE ---
+function updateUI() {
+  calculateMetrics();
+  renderTransactions();
+  renderRecentActivity();
+  updateChart();
+}
+
+// --- CALCULATE METRICS ---
+function calculateMetrics() {
+  if (isPrivacyMode) {
+    totalBalanceEl.textContent = `${currentCurrency}••••••`;
+    totalIncomeEl.textContent = `+${currentCurrency}••••••`;
+    totalExpensesEl.textContent = `-${currentCurrency}••••••`;
+    return;
   }
 
-  // Number Formatter
-  const formatNumber = (num) => {
-    return (Number(num) || 0).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  };
+  const incomeUSD = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  const expensesUSD = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const balanceUSD = incomeUSD - expensesUSD;
 
-  // LocalStorage Saver
-  const saveToStorage = () => {
-    try {
-      localStorage.setItem('spendwise_transactions', JSON.stringify(transactions));
-    } catch (e) {
-      console.error('Error saving storage:', e);
+  const convertedBalance = convertAmount(balanceUSD);
+  const convertedIncome = convertAmount(incomeUSD);
+  const convertedExpenses = convertAmount(expensesUSD);
+
+  totalBalanceEl.textContent = `${currentCurrency}${formatCurrency(convertedBalance)}`;
+  totalIncomeEl.textContent = `+${currentCurrency}${formatCurrency(convertedIncome)}`;
+  totalExpensesEl.textContent = `-${currentCurrency}${formatCurrency(convertedExpenses)}`;
+}
+
+// --- RENDER TABLES ---
+function renderTransactions() {
+  const filterValue = categoryFilter ? categoryFilter.value : 'All';
+  const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+  const filtered = transactions.filter(t => {
+    const matchesCategory = filterValue === 'All' || t.category === filterValue;
+    const matchesSearch = t.description.toLowerCase().includes(searchTerm);
+    return matchesCategory && matchesSearch;
+  });
+
+  transactionList.innerHTML = '';
+
+  if (filtered.length === 0) {
+    transactionList.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">No transactions found.</td></tr>`;
+    return;
+  }
+
+  filtered.forEach(t => {
+    const tr = document.createElement('tr');
+    const isIncome = t.type === 'income';
+    const amountSign = isIncome ? '+' : '-';
+    const amountClass = isIncome ? 'text-success' : 'text-danger';
+    const convertedValue = convertAmount(t.amount);
+
+    tr.innerHTML = `
+      <td><strong>${t.description}</strong></td>
+      <td><span class="badge">${t.category}</span></td>
+      <td>${t.date}</td>
+      <td class="${amountClass}" style="font-weight: 600;">${amountSign}${currentCurrency}${formatCurrency(convertedValue)}</td>
+      <td class="text-right">
+        <button onclick="openEditModal(${t.id})" class="btn" style="padding: 0.25rem 0.5rem; background: transparent; color: var(--primary);" title="Edit">✏️</button>
+        <button onclick="deleteTransaction(${t.id})" class="btn" style="padding: 0.25rem 0.5rem; background: transparent; color: var(--danger-color);" title="Delete">🗑️</button>
+      </td>
+    `;
+    transactionList.appendChild(tr);
+  });
+}
+
+function renderRecentActivity() {
+  dashboardRecentList.innerHTML = '';
+  const recent = [...transactions].slice(-4).reverse();
+
+  if (recent.length === 0) {
+    dashboardRecentList.innerHTML = `<tr><td colspan="3" style="text-align:center; color: var(--text-muted); padding: 1rem;">No recent transactions.</td></tr>`;
+    return;
+  }
+
+  recent.forEach(t => {
+    const tr = document.createElement('tr');
+    const isIncome = t.type === 'income';
+    const amountSign = isIncome ? '+' : '-';
+    const amountClass = isIncome ? 'text-success' : 'text-danger';
+    const convertedValue = convertAmount(t.amount);
+
+    tr.innerHTML = `
+      <td>${t.description}</td>
+      <td><span class="badge">${t.category}</span></td>
+      <td class="text-right ${amountClass}" style="font-weight: 600;">${amountSign}${currentCurrency}${formatCurrency(convertedValue)}</td>
+    `;
+    dashboardRecentList.appendChild(tr);
+  });
+}
+
+// --- ADD / EDIT / DELETE ---
+transactionForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  const description = document.getElementById('txDescription').value;
+  const inputAmount = parseFloat(document.getElementById('txAmount').value);
+  const type = document.getElementById('txType').value;
+  const category = document.getElementById('txCategory').value;
+  const date = document.getElementById('txDate').value || new Date().toISOString().split('T')[0];
+
+  const rate = exchangeRates[currentCurrencyCode] || 1;
+  const amountInUSD = inputAmount / rate;
+
+  if (editingTransactionId !== null) {
+    const index = transactions.findIndex(t => t.id === editingTransactionId);
+    if (index !== -1) {
+      transactions[index] = { id: editingTransactionId, description, amount: amountInUSD, type, category, date };
     }
-  };
+  } else {
+    transactions.push({ id: Date.now(), description, amount: amountInUSD, type, category, date });
+  }
 
-  // Sidebar Switcher Handler
-  navLinks.forEach((link) => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const targetId = link.getAttribute('data-target');
-      if (!targetId) return;
-
-      navLinks.forEach((nav) => nav.classList.remove('active'));
-      contentSections.forEach((sec) => sec.classList.remove('active'));
-
-      link.classList.add('active');
-      const targetSection = document.getElementById(targetId);
-      if (targetSection) targetSection.classList.add('active');
-
-      if (headersMap[targetId]) {
-        if (pageTitle) pageTitle.textContent = headersMap[targetId].title;
-        if (pageSubtitle) pageSubtitle.textContent = headersMap[targetId].subtitle;
-      }
-    });
-  });
-
-  // Jump from "View All →" on Dashboard to Transactions View
-  viewAllTxBtn?.addEventListener('click', (e) => {
-    e.preventDefault();
-    const txLink = document.querySelector('.nav-link[data-target="transactionsSection"]');
-    if (txLink) txLink.click();
-  });
-
-  // Filter Event Listeners
-  currencySelect?.addEventListener('change', (e) => {
-    currentCurrency = e.target.value;
-    updateDashboard();
-  });
-
-  categoryFilter?.addEventListener('change', (e) => {
-    selectedCategory = e.target.value;
-    updateDashboard();
-  });
-
-  searchInput?.addEventListener('input', (e) => {
-    searchQuery = e.target.value.toLowerCase().trim();
-    updateDashboard();
-  });
-
-  // Modal Controls
-  const openModal = () => modal?.classList.add('active');
-  const closeModal = () => {
-    modal?.classList.remove('active');
-    transactionForm?.reset();
-    editingTransactionId = null;
-    if (modalTitle) modalTitle.textContent = 'Add New Transaction';
-    if (submitModalBtn) submitModalBtn.textContent = 'Add Transaction';
-  };
-
-  openModalBtn?.addEventListener('click', () => {
-    editingTransactionId = null;
-    if (modalTitle) modalTitle.textContent = 'Add New Transaction';
-    if (submitModalBtn) submitModalBtn.textContent = 'Add Transaction';
-    openModal();
-  });
-
-  closeModalBtn?.addEventListener('click', closeModal);
-  cancelBtn?.addEventListener('click', closeModal);
-  window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-
-  // Open Edit Modal Mode
-  const openEditModal = (transaction) => {
-    editingTransactionId = transaction.id;
-    if (modalTitle) modalTitle.textContent = 'Edit Transaction';
-    if (submitModalBtn) submitModalBtn.textContent = 'Save Changes';
-
-    const currentRate = exchangeRates[currentCurrency] || 1.0;
-    const displayAmount = transaction.amount * currentRate;
-
-    document.getElementById('txDescription').value = transaction.description;
-    document.getElementById('txAmount').value = displayAmount.toFixed(2);
-    document.getElementById('txType').value = transaction.type;
-    document.getElementById('txCategory').value = transaction.category;
-    document.getElementById('txDate').value = transaction.date;
-
-    openModal();
-  };
-
-  // Render Chart.js Expense Breakdown Pie Chart
-  const renderExpenseChart = (rate) => {
-    const ctx = document.getElementById('expenseChart')?.getContext('2d');
-    if (!ctx) return;
-
-    // Group only expenses by category
-    const categoryTotals = {};
-    transactions
-      .filter(t => t.type === 'expense')
-      .forEach(t => {
-        const cat = t.category || 'General';
-        const converted = (Number(t.amount) || 0) * rate;
-        categoryTotals[cat] = (categoryTotals[cat] || 0) + converted;
-      });
-
-    const labels = Object.keys(categoryTotals);
-    const data = Object.values(categoryTotals);
-
-    // If no expenses exist, destroy existing chart and exit
-    if (labels.length === 0) {
-      if (expenseChartInstance) {
-        expenseChartInstance.destroy();
-        expenseChartInstance = null;
-      }
-      return;
-    }
-
-    const chartColors = [
-      '#FF6384',
-      '#36A2EB',
-      '#FFCE56',
-      '#4BC0C0',
-      '#9966FF',
-      '#FF9F40'
-    ];
-
-    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-    const textColor = isDarkMode ? '#e0e0e0' : '#212529';
-
-    // If chart already exists, update data dynamically
-    if (expenseChartInstance) {
-      expenseChartInstance.data.labels = labels;
-      expenseChartInstance.data.datasets[0].data = data;
-      expenseChartInstance.data.datasets[0].backgroundColor = chartColors.slice(0, labels.length);
-      expenseChartInstance.options.plugins.legend.labels.color = textColor;
-      expenseChartInstance.update();
-    } else {
-      // Create new Chart instance
-      expenseChartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: data,
-            backgroundColor: chartColors.slice(0, labels.length),
-            borderWidth: 1,
-            borderColor: isDarkMode ? '#1e1e1e' : '#ffffff'
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                boxWidth: 12,
-                font: { size: 11 },
-                color: textColor
-              }
-            },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  const val = context.raw || 0;
-                  return ` ${context.label}: ${currentCurrency}${formatNumber(val)}`;
-                }
-              }
-            }
-          }
-        }
-      });
-    }
-  };
-
-  // Update Mini Dashboard Recent Activity Table
-  const renderDashboardRecent = (rate) => {
-    if (!dashboardRecentList) return;
-    dashboardRecentList.innerHTML = '';
-
-    const recentItems = transactions.slice(0, 4);
-
-    if (recentItems.length === 0) {
-      dashboardRecentList.innerHTML = `
-        <tr>
-          <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
-            No recent activity to show.
-          </td>
-        </tr>
-      `;
-      return;
-    }
-
-    recentItems.forEach((t) => {
-      const isIncome = t.type === 'income';
-      const convertedAmount = (Number(t.amount) || 0) * rate;
-      const row = document.createElement('tr');
-
-      row.innerHTML = `
-        <td>
-          <span class="badge ${isIncome ? 'badge-income' : 'badge-expense'}">
-            ${isIncome ? '↑' : '↓'}
-          </span>
-          <span style="margin-left: 0.5rem; font-weight: 500;">${t.description || 'Untitled'}</span>
-        </td>
-        <td><span class="badge badge-category">${t.category || 'General'}</span></td>
-        <td class="${isIncome ? 'text-success' : 'text-danger'} text-right" style="font-weight: 600;">
-          ${isIncome ? '+' : '-'}${currentCurrency}${formatNumber(convertedAmount)}
-        </td>
-      `;
-      dashboardRecentList.appendChild(row);
-    });
-  };
-
-  // Main Render Routine
-  const updateDashboard = () => {
-    saveToStorage();
-
-    const rate = exchangeRates[currentCurrency] || 1.0;
-
-    // Totals calculations
-    const baseIncome = transactions
-      .filter(t => t && t.type === 'income')
-      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
-
-    const baseExpenses = transactions
-      .filter(t => t && t.type === 'expense')
-      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
-
-    const baseBalance = baseIncome - baseExpenses;
-
-    if (totalBalanceEl) totalBalanceEl.textContent = `${currentCurrency}${formatNumber(baseBalance * rate)}`;
-    if (totalIncomeEl) totalIncomeEl.textContent = `+${currentCurrency}${formatNumber(baseIncome * rate)}`;
-    if (totalExpensesEl) totalExpensesEl.textContent = `-${currentCurrency}${formatNumber(baseExpenses * rate)}`;
-
-    // Render Dashboard Charts & Tables
-    renderExpenseChart(rate);
-    renderDashboardRecent(rate);
-
-    if (!transactionList) return;
-    transactionList.innerHTML = '';
-
-    // Filter for All Transactions view
-    const filteredTransactions = transactions.filter(t => {
-      if (!t) return false;
-      const matchesCategory = selectedCategory === 'All' || t.category === selectedCategory;
-      const matchesSearch = (t.description || '').toLowerCase().includes(searchQuery);
-      return matchesCategory && matchesSearch;
-    });
-
-    if (filteredTransactions.length === 0) {
-      transactionList.innerHTML = `
-        <tr>
-          <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-            ${transactions.length === 0 
-              ? 'No transactions found. Click "+ Add Transaction" to start.' 
-              : 'No matching transactions found.'}
-          </td>
-        </tr>
-      `;
-      return;
-    }
-
-    // Render Full Transactions Table
-    filteredTransactions.forEach((t) => {
-      const isIncome = t.type === 'income';
-      const convertedAmount = (Number(t.amount) || 0) * rate;
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>
-          <span class="badge ${isIncome ? 'badge-income' : 'badge-expense'}">
-            ${isIncome ? '↑' : '↓'}
-          </span>
-          <span style="margin-left: 0.5rem; font-weight: 500;">${t.description || 'Untitled'}</span>
-        </td>
-        <td><span class="badge badge-category">${t.category || 'General'}</span></td>
-        <td style="color: var(--text-muted); font-size: 0.875rem;">${t.date || new Date().toISOString().split('T')[0]}</td>
-        <td class="${isIncome ? 'text-success' : 'text-danger'}" style="font-weight: 600;">
-          ${isIncome ? '+' : '-'}${currentCurrency}${formatNumber(convertedAmount)}
-        </td>
-        <td class="text-right">
-          <button class="btn btn-secondary-outline edit-btn" style="margin-right: 0.25rem;">Edit</button>
-          <button class="btn btn-danger-outline delete-btn">Delete</button>
-        </td>
-      `;
-
-      row.querySelector('.edit-btn')?.addEventListener('click', () => openEditModal(t));
-
-      row.querySelector('.delete-btn')?.addEventListener('click', () => {
-        const index = transactions.findIndex(item => item && item.id === t.id);
-        if (index !== -1) transactions.splice(index, 1);
-        updateDashboard();
-      });
-
-      transactionList.appendChild(row);
-    });
-  };
-
-  // Form Submit Handler
-  transactionForm?.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    try {
-      const description = document.getElementById('txDescription')?.value || 'Untitled';
-      const amountEntered = parseFloat(document.getElementById('txAmount')?.value);
-      const type = document.getElementById('txType')?.value || 'expense';
-      const category = document.getElementById('txCategory')?.value || 'General';
-      const dateInput = document.getElementById('txDate')?.value;
-
-      if (isNaN(amountEntered)) {
-        alert('Please enter a valid amount.');
-        return;
-      }
-
-      const currentRate = exchangeRates[currentCurrency] || 1.0;
-      const amountInUSD = amountEntered / currentRate;
-
-      if (editingTransactionId !== null) {
-        const index = transactions.findIndex(t => t.id === editingTransactionId);
-        if (index !== -1) {
-          transactions[index] = {
-            id: editingTransactionId,
-            description,
-            amount: amountInUSD,
-            type,
-            category,
-            date: dateInput || new Date().toISOString().split('T')[0]
-          };
-        }
-      } else {
-        transactions.unshift({
-          id: Date.now(),
-          description,
-          amount: amountInUSD,
-          type,
-          category,
-          date: dateInput || new Date().toISOString().split('T')[0]
-        });
-      }
-
-      updateDashboard();
-    } catch (err) {
-      console.error('Error submitting form:', err);
-    } finally {
-      closeModal();
-    }
-  });
-
-  // Initial Boot
-  updateDashboard();
+  saveTransactionsToStorage();
+  updateUI();
+  closeModal();
 });
+
+window.openEditModal = function(id) {
+  const transaction = transactions.find(t => t.id === id);
+  if (!transaction) return;
+
+  editingTransactionId = id;
+  modalTitle.textContent = 'Edit Transaction';
+  submitModalBtn.textContent = 'Save Changes';
+
+  const convertedValue = convertAmount(transaction.amount);
+
+  document.getElementById('txDescription').value = transaction.description;
+  document.getElementById('txAmount').value = convertedValue.toFixed(2);
+  document.getElementById('txType').value = transaction.type;
+  document.getElementById('txCategory').value = transaction.category;
+  document.getElementById('txDate').value = transaction.date;
+
+  transactionModal.classList.add('active');
+};
+
+window.deleteTransaction = function(id) {
+  transactions = transactions.filter(t => t.id !== id);
+  saveTransactionsToStorage();
+  updateUI();
+};
+
+// --- DATA EXPORT & IMPORT ---
+if (exportCsvBtn) {
+  exportCsvBtn.addEventListener('click', () => {
+    if (transactions.length === 0) return alert("No transactions available to export.");
+
+    const headers = ["ID", "Description", "Category", "Type", "Amount (USD)", "Date"];
+    const rows = transactions.map(t => [
+      t.id,
+      `"${t.description.replace(/"/g, '""')}"`,
+      `"${t.category}"`,
+      t.type,
+      t.amount.toFixed(2),
+      t.date
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", `spendwise_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  });
+}
+
+if (exportJsonBtn) {
+  exportJsonBtn.addEventListener('click', () => {
+    if (transactions.length === 0) return alert("No transaction data to back up.");
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `spendwise_backup_${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  });
+}
+
+if (importJsonInput) {
+  importJsonInput.addEventListener('change', (e) => {
+    const fileReader = new FileReader();
+    fileReader.onload = (event) => {
+      try {
+        const importedData = JSON.parse(event.target.result);
+        if (Array.isArray(importedData)) {
+          transactions = importedData;
+          saveTransactionsToStorage();
+          updateUI();
+          alert("Backup restored successfully!");
+        } else {
+          alert("Invalid backup file structure.");
+        }
+      } catch (err) {
+        alert("Error reading JSON file.");
+      }
+    };
+    if (e.target.files[0]) fileReader.readAsText(e.target.files[0]);
+  });
+}
+
+// --- SETTINGS CONTROLS ---
+if (privacyToggle) {
+  privacyToggle.addEventListener('change', (e) => {
+    isPrivacyMode = e.target.checked;
+    localStorage.setItem('spendwise_privacy', isPrivacyMode ? 'true' : 'false');
+    calculateMetrics();
+  });
+}
+
+if (themeSelect) {
+  themeSelect.addEventListener('change', (e) => {
+    const theme = e.target.value;
+    applyTheme(theme);
+    localStorage.setItem('spendwise_theme', theme);
+  });
+}
+
+if (clearDataBtn) {
+  clearDataBtn.addEventListener('click', () => {
+    if (confirm("Are you sure you want to clear all data? This cannot be undone.")) {
+      localStorage.removeItem('spendwise_transactions');
+      transactions = [];
+      updateUI();
+      alert("All data cleared.");
+    }
+  });
+}
+
+// --- CHART.JS ---
+function initChart() {
+  const canvas = document.getElementById('expenseChart');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  expenseChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: [],
+      datasets: [{
+        data: [],
+        backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#1e293b' } }
+      }
+    }
+  });
+}
+
+function updateChart() {
+  if (!expenseChart) return;
+
+  const expenses = transactions.filter(t => t.type === 'expense');
+  const categories = {};
+
+  expenses.forEach(t => {
+    const convertedVal = convertAmount(t.amount);
+    categories[t.category] = (categories[t.category] || 0) + convertedVal;
+  });
+
+  const labels = Object.keys(categories);
+  const data = Object.values(categories);
+
+  if (labels.length === 0) {
+    expenseChart.data.labels = ['No Expenses'];
+    expenseChart.data.datasets[0].data = [1];
+    expenseChart.data.datasets[0].backgroundColor = ['#e2e8f0'];
+  } else {
+    expenseChart.data.labels = labels;
+    expenseChart.data.datasets[0].data = data;
+    expenseChart.data.datasets[0].backgroundColor = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+  }
+
+  const isDark = document.body.classList.contains('dark-theme');
+  if (expenseChart.options.plugins.legend) {
+    expenseChart.options.plugins.legend.labels.color = isDark ? '#f8fafc' : '#1e293b';
+  }
+
+  expenseChart.update();
+}
+
+// --- EVENT LISTENERS & NAVIGATION ---
+currencySelect.addEventListener('change', (e) => {
+  currentCurrency = e.target.value;
+  currentCurrencyCode = currencyMap[currentCurrency] || 'USD';
+  updateUI();
+});
+
+if (categoryFilter) categoryFilter.addEventListener('change', renderTransactions);
+if (searchInput) searchInput.addEventListener('input', renderTransactions);
+
+openModalBtn.addEventListener('click', () => {
+  editingTransactionId = null;
+  modalTitle.textContent = 'Add New Transaction';
+  submitModalBtn.textContent = 'Add Transaction';
+  transactionForm.reset();
+  transactionModal.classList.add('active');
+});
+
+closeModalBtn.addEventListener('click', closeModal);
+cancelBtn.addEventListener('click', closeModal);
+
+function closeModal() {
+  transactionModal.classList.remove('active');
+  editingTransactionId = null;
+  transactionForm.reset();
+}
+
+// Tab Switching
+navLinks.forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const targetId = link.getAttribute('data-target');
+
+    navLinks.forEach(l => l.classList.remove('active'));
+    contentSections.forEach(s => s.classList.remove('active'));
+
+    link.classList.add('active');
+    document.getElementById(targetId).classList.add('active');
+
+    const titleText = link.textContent.trim();
+    pageTitle.textContent = titleText;
+    pageSubtitle.textContent = `Manage your ${titleText.toLowerCase()} options.`;
+
+    closeMobileSidebar();
+  });
+});
+
+if (viewAllTxBtn) {
+  viewAllTxBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelector('[data-target="transactionsSection"]').click();
+  });
+}
+
+// Mobile Sidebar
+menuToggleBtn.addEventListener('click', () => {
+  sidebar.classList.add('open');
+  sidebarBackdrop.classList.add('active');
+});
+
+closeSidebarBtn.addEventListener('click', closeMobileSidebar);
+sidebarBackdrop.addEventListener('click', closeMobileSidebar);
+
+function closeMobileSidebar() {
+  sidebar.classList.remove('open');
+  sidebarBackdrop.classList.remove('active');
+}
