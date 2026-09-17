@@ -3,119 +3,9 @@
    ========================================== */
 html {
   scroll-behavior: smooth;
-}
-
-/* ==========================================
-   RESPONSIVE NAVBAR & MOBILE HAMBURGER
-   ========================================== */
-
-.mobile-menu-toggle {
-  display: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 28px;
-  height: 20px;
-  padding: 0;
-  z-index: 1001;
-}
-
-.hamburger-bar {
-  display: block;
-  width: 100%;
-  height: 3px;
-  background-color: var(--text-dark, #111827);
-  border-radius: 2px;
-  transition: all 0.3s ease;
-}
-
-/* Tablet and Mobile Breakpoint */
-@media (max-width: 768px) {
-  .mobile-menu-toggle {
-    display: flex;
-  }
-
-  .nav-links {
-    position: fixed;
-    top: 0;
-    right: -100%;
-    width: 70%;
-    max-width: 300px;
-    height: 100vh;
-    background-color: var(--bg-card, #ffffff);
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 1.5rem;
-    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
-    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1000;
-  }
-
-  /* Active state class toggled via JavaScript */
-  .nav-links.active {
-    right: 0;
-  }
-
-  .nav-actions {
-    display: none; /* Can be integrated into mobile drawer if needed */
-  }
-}
-
-/* ==========================================
-   RESPONSIVE HERO SECTION & GRID
-   ========================================== */
-
-.hero-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  gap: 2rem;
-}
-
-@media (max-width: 968px) {
-  .hero-container {
-    grid-template-columns: 1fr;
-    text-align: center;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-  }
-
-  .hero-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .hero-buttons {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .hero-preview {
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto;
-  }
-}
-
-@media (max-width: 480px) {
-  .hero-content h1 {
-    font-size: 2rem;
-    line-height: 1.2;
-  }
-
-  .hero-content p {
-    font-size: 0.95rem;
-  }
-}
-
-html {
-  scroll-behavior: smooth;
   scroll-padding-top: 80px; /* Prevents sticky navbar from covering section titles */
 }
+
 /* Use a more intuitive box-sizing model */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -205,11 +95,6 @@ p, h1, h2, h3, h4, h5, h6 {
   color: #0f172a;
 }
 
-.nav-links a {
-  gap: 2px;
-  color: #334155;
-}
-
 .btn {
   display: inline-block;
   text-decoration: none;
@@ -286,6 +171,7 @@ p, h1, h2, h3, h4, h5, h6 {
   flex-direction: column;
   gap: 5px;
   padding: 8px;
+  z-index: 1001;
 }
 
 .hamburger-bar {
@@ -296,11 +182,18 @@ p, h1, h2, h3, h4, h5, h6 {
   transition: all 0.3s ease;
 }
 
+/* ==========================================
+   HERO SECTION
+   ========================================== */
+
 .hero-container {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 80px;
   padding: 80px 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .hero-content,
@@ -315,22 +208,19 @@ p, h1, h2, h3, h4, h5, h6 {
 }
 
 .card {
-  background-color: #ffffff;
+  background-color: #f8fafc;
   padding: 24px;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
   max-width: 480px;
-    background-color: #f8fafc;
-
+  margin: 0 auto; /* Centers the card horizontally if container is wider */
 }
-.card:hover {
- box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-   transition: transform 0.2s ease-in, box-shadow 0.2s ease-out;
 
- /* transition: box-shadow 0.6s ease; */
- transition: transform 0.3s ease;
- transform: translateY(-5px);
+.card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.2s ease-out;
+  transform: translateY(-5px);
 }
 
 .card h3 {
@@ -383,6 +273,10 @@ p, h1, h2, h3, h4, h5, h6 {
 .card-list li span.expense {
   color: #dc2626;
 }
+
+/* ==========================================
+   FEATURES SECTION
+   ========================================== */
 
 .features {
   padding: 80px 0;
@@ -444,6 +338,10 @@ p, h1, h2, h3, h4, h5, h6 {
   font-size: 0.95rem;
 }
 
+/* ==========================================
+   STATS SECTION
+   ========================================== */
+
 .stats {
   padding: 48px 0;
   background-color: #f8fafc;
@@ -471,6 +369,10 @@ p, h1, h2, h3, h4, h5, h6 {
   font-weight: 500;
   margin-top: 4px;
 }
+
+/* ==========================================
+   PRICING SECTION
+   ========================================== */
 
 .pricing {
   padding: 80px 0;
@@ -577,6 +479,77 @@ p, h1, h2, h3, h4, h5, h6 {
   margin-bottom: 14px;
 }
 
+/* ==========================================
+   CTA BANNER
+   ========================================== */
+
+.cta-banner {
+  padding: 60px 0;
+  background-color: #ffffff;
+}
+
+.cta-card {
+  background: linear-gradient(135deg, #0052FF 0%, #0039B3 100%);
+  border-radius: 32px;
+  padding: 64px 32px;
+  text-align: center;
+  color: #ffffff;
+  box-shadow: 0 20px 40px rgba(0, 82, 255, 0.2);
+}
+
+.cta-card h2 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.cta-card p {
+  font-size: 1.1rem;
+  color: #e0e7ff;
+  max-width: 540px;
+  margin: 0 auto 32px auto;
+}
+
+.cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-pill-light {
+  background-color: #ffffff;
+  color: #0052FF;
+  padding: 12px 28px;
+  border-radius: 9999px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-pill-light:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.btn-pill-outline-light {
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  padding: 12px 28px;
+  border-radius: 9999px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.btn-pill-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================
+   FOOTER
+   ========================================== */
+
 .footer {
   background-color: #0f172a;
   color: #94a3b8;
@@ -643,6 +616,41 @@ p, h1, h2, h3, h4, h5, h6 {
   font-size: 0.85rem;
 }
 
+/* ==========================================
+   NAVBAR ACTIONS & RESPONSIVE STYLES
+   ========================================== */
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-actions .btn {
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.nav-login {
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  background-color: transparent;
+}
+
+.nav-login:hover {
+  border-color: #0052FF;
+  color: #0052FF;
+  background-color: rgba(0, 82, 255, 0.04);
+}
+
+/* ==========================================
+   MEDIA QUERIES (RESPONSIVE)
+   ========================================== */
+
 @media (max-width: 992px) {
   .pricing-grid {
     grid-template-columns: 1fr;
@@ -683,14 +691,35 @@ p, h1, h2, h3, h4, h5, h6 {
     display: none;
   }
 
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .nav-login {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  /* Fixed Hero Container alignment issue by removing margin-left offset */
   .hero-container {
     flex-direction: column;
     padding: 40px 0;
-    margin-left: 30px;
+    margin-left: 0; 
+    align-items: center;
+  }
+
+  .hero-preview {
+    width: 100%;
+    display: flex;
+    justify-content: center;
   }
 
   .card {
-    max-width: 100%;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
   }
 
   .features-grid {
@@ -709,121 +738,13 @@ p, h1, h2, h3, h4, h5, h6 {
   }
 }
 
-/* CTA Banner Container */
-.cta-banner {
-  padding: 60px 0;
-  background-color: #ffffff;
-}
-
-/* Primary Blue Pill Card */
-.cta-card {
-  background: linear-gradient(135deg, #0052FF 0%, #0039B3 100%);
-  border-radius: 32px;
-  padding: 64px 32px;
-  text-align: center;
-  color: #ffffff;
-  box-shadow: 0 20px 40px rgba(0, 82, 255, 0.2);
-}
-
-.cta-card h2 {
-  font-size: 2.25rem;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.cta-card p {
-  font-size: 1.1rem;
-  color: #e0e7ff;
-  max-width: 540px;
-  margin: 0 auto 32px auto;
-}
-
-/* Button Group */
-.cta-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.btn-pill-light {
-  background-color: #ffffff;
-  color: #0052FF;
-  padding: 12px 28px;
-  border-radius: 9999px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.btn-pill-light:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-}
-
-.btn-pill-outline-light {
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #ffffff;
-  padding: 12px 28px;
-  border-radius: 9999px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background-color 0.2s ease;
-}
-
-.btn-pill-outline-light:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-/* Navbar Alignment & Actions Container */
-.nav-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* Navbar Buttons Styling */
-.nav-actions .btn {
-  padding: 8px 18px;
-  font-size: 0.9rem;
-  border-radius: 9999px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.nav-login {
-  color: #334155;
-  border: 1px solid #cbd5e1;
-  background-color: transparent;
-}
-
-.nav-login:hover {
-  border-color: #0052FF;
-  color: #0052FF;
-  background-color: rgba(0, 82, 255, 0.04);
-}
-
-/* Mobile Responsiveness Adjustment */
-@media (max-width: 768px) {
-  .nav-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .nav-login {
-    padding: 6px 12px;
-    font-size: 0.85rem;
+@media (max-width: 480px) {
+  .hero-content h1 {
+    font-size: 2rem;
+    line-height: 1.2;
   }
 
-  .nav-cta {
-    padding: 6px 12px;
-    font-size: 0.85rem;
+  .hero-content p {
+    font-size: 0.95rem;
   }
 }
