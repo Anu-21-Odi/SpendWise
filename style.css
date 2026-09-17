@@ -1,3 +1,117 @@
+/* ==========================================
+   SMOOTH SCROLLING BASE
+   ========================================== */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ==========================================
+   RESPONSIVE NAVBAR & MOBILE HAMBURGER
+   ========================================== */
+
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 28px;
+  height: 20px;
+  padding: 0;
+  z-index: 1001;
+}
+
+.hamburger-bar {
+  display: block;
+  width: 100%;
+  height: 3px;
+  background-color: var(--text-dark, #111827);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+/* Tablet and Mobile Breakpoint */
+@media (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  .nav-links {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 70%;
+    max-width: 300px;
+    height: 100vh;
+    background-color: var(--bg-card, #ffffff);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+  }
+
+  /* Active state class toggled via JavaScript */
+  .nav-links.active {
+    right: 0;
+  }
+
+  .nav-actions {
+    display: none; /* Can be integrated into mobile drawer if needed */
+  }
+}
+
+/* ==========================================
+   RESPONSIVE HERO SECTION & GRID
+   ========================================== */
+
+.hero-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 2rem;
+}
+
+@media (max-width: 968px) {
+  .hero-container {
+    grid-template-columns: 1fr;
+    text-align: center;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  .hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-buttons {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .hero-preview {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-content h1 {
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+
+  .hero-content p {
+    font-size: 0.95rem;
+  }
+}
+
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 80px; /* Prevents sticky navbar from covering section titles */
