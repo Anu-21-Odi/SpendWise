@@ -9,8 +9,11 @@
   const Auth = window.SpendWiseAuth;
 
   if (!F) {
-    document.body.innerHTML =
-      '<p style="padding:2rem;font-family:system-ui">SpendWise could not load its core module (js/finance.js).</p>';
+    clearEl(document.body);
+    document.body.appendChild(el('p', {
+      style: 'padding:2rem;font-family:system-ui',
+      text: 'SpendWise could not load its core module (js/finance.js).'
+    }));
     return;
   }
 
@@ -49,7 +52,83 @@
    * ==================================================================== */
 
   const $ = (id) => document.getElementById(id);
-  const esc = F.escapeHtml;
+
+  /* ------------------------------------------------------------------ *
+   * DOM construction
+   *
+   * Every node in the UI is built with createElement / createElementNS and
+   * filled with textContent. This file never assigns innerHTML, so no value
+   * read back from the ledger can ever be parsed as markup.
+   * ------------------------------------------------------------------ */
+
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  /** Remove every child node (the DOM equivalent of `el.innerHTML = ''`). */
+  function clearEl(target) {
+    while (target && target.firstChild) target.removeChild(target.firstChild);
+  }
+
+  function appendAll(parent, children) {
+    (Array.isArray(children) ? children : [children]).forEach((child) => {
+      if (child === null || child === undefined || child === false) return;
+      parent.appendChild(
+        typeof child === 'object' ? child : document.createTextNode(String(child))
+      );
+    });
+  }
+
+  /**
+   * Create an element from a plain descriptor.
+   *   class / text / style / dataset are handled specially, every other key
+   *   becomes a literal attribute (so 'aria-label', 'colspan', 'title' work).
+   */
+  function el(tag, props, children) {
+    const created = document.createElement(tag);
+    if (props) {
+      Object.keys(props).forEach((key) => {
+        const value = props[key];
+        if (value === null || value === undefined || value === false) return;
+        if (key === 'class') created.className = value;
+        else if (key === 'text') created.textContent = value;
+        else if (key === 'style') created.setAttribute('style', value);
+        else if (key === 'dataset') Object.assign(created.dataset, value);
+        else created.setAttribute(key, value === true ? '' : String(value));
+      });
+    }
+    if (children) appendAll(created, children);
+    return created;
+  }
+
+  /** Create an SVG element — needed because SVG nodes require their own namespace. */
+  function svgEl(tag, attrs, children) {
+    const created = document.createElementNS(SVG_NS, tag);
+    Object.keys(attrs || {}).forEach((key) => {
+      const value = attrs[key];
+      if (value !== null && value !== undefined) created.setAttribute(key, String(value));
+    });
+    if (children) appendAll(created, children);
+    return created;
+  }
+
+  /** Icon + heading + copy, used wherever a panel has nothing to show. */
+  function emptyState(icon, title, body, extraStyle) {
+    return el('div', { class: 'empty-state', style: extraStyle || null }, [
+      el('div', { class: 'empty-icon', text: icon }),
+      el('h3', { text: title }),
+      el('p', { text: body })
+    ]);
+  }
+
+  /** A progress bar; `fill` is a 0-100 percentage, `color` an optional CSS colour. */
+  function progressBar(fill, color, extraStyle, fillClass) {
+    const pctValue = Math.min(100, Math.max(0, Number(fill) || 0));
+    return el('div', { class: 'progress', style: extraStyle || null }, [
+      el('div', {
+        class: `progress-fill${fillClass ? ` ${fillClass}` : ''}`,
+        style: `width:${pctValue}%;${color ? ` --fill-color:${color};` : ''}`
+      })
+    ]);
+  }
 
   const prefersReducedMotion = () =>
     window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -302,7 +381,7 @@
 
   function fillSelect(select, options, selected) {
     if (!select) return;
-    select.innerHTML = '';
+    clearEl(select);
     options.forEach((o) => {
       const opt = document.createElement('option');
       opt.value = o.value;
@@ -391,11 +470,52 @@
    * Render: transactions
    * ==================================================================== */
 
-  function amountCell(t) {
+  /** Signed, coloured amount for a table cell. */
+  function amountNode(t) {
     const sign = t.type === 'expense' ? '-' : '+';
-    const cls = t.type === 'income' ? 'text-success' : t.type === 'savings' ? '' : 'text-danger';
-    const style = t.type === 'savings' ? 'color: var(--accent);' : '';
-    return `<span class="${cls}" style="${style}">${sign}${money(t.amount)}</span>`;
+    const tone = t.type === 'income' ? 'text-success' : t.type === 'expense' ? 'text-danger' : '';
+    return el('span', {
+      class: tone || null,
+      style: t.type === 'savings' ? 'color: var(--accent);' : null,
+      text: `${sign}${money(t.amount)}`
+    });
+  }
+
+  function badgeNode(text, tone) {
+    return el('span', { class: `badge${tone ? ` badge-${tone}` : ''}`, text });
+  }
+
+  /**
+   * First column of every transaction row: category icon, name, and an optional
+   * sub-line (notes, or a friendly date).
+   */
+  function descriptionCell(t, subText, wrapped) {
+    const m = F.meta(t.category);
+    const label = wrapped
+      ? el('span', { style: 'min-width:0;' }, [
+          el('span', { class: 'tx-name', title: t.description, text: t.description }),
+          subText ? el('div', { class: 'tx-sub', text: subText }) : null
+        ])
+      : el('span', { class: 'tx-name', text: t.description });
+
+    return el('td', null, [
+      el('div', { class: 'tx-desc' }, [
+        el('span', { class: 'tx-icon', text: m.icon }),
+        label
+      ])
+    ]);
+  }
+
+  /** An icon button, wired up through the delegated row-action handler. */
+  function actionButton(icon, actionKey, id, title, label, danger) {
+    return el('button', {
+      type: 'button',
+      class: `icon-action${danger ? ' danger' : ''}`,
+      title,
+      text: icon,
+      'aria-label': label,
+      dataset: { [actionKey]: String(id) }
+    });
   }
 
   function renderTransactions() {
@@ -403,43 +523,34 @@
     if (!list) return;
 
     const rows = visibleTransactions();
-    list.innerHTML = '';
+    clearEl(list);
 
     if (!rows.length) {
-      list.innerHTML = `
-        <tr><td colspan="5">
-          <div class="empty-state">
-            <div class="empty-icon">🔍</div>
-            <h3>${state.transactions.length ? 'No matches' : 'No transactions yet'}</h3>
-            <p>${state.transactions.length
+      list.appendChild(el('tr', null, [
+        el('td', { colspan: 5 }, [
+          emptyState(
+            '🔍',
+            state.transactions.length ? 'No matches' : 'No transactions yet',
+            state.transactions.length
               ? 'Try a different search term, category or date range.'
-              : 'Add your first transaction or load the demo dataset from the dashboard.'}</p>
-          </div>
-        </td></tr>`;
+              : 'Add your first transaction or load the demo dataset from the dashboard.'
+          )
+        ])
+      ]));
     } else {
       rows.forEach((t) => {
-        const m = F.meta(t.category);
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>
-            <div class="tx-desc">
-              <span class="tx-icon">${m.icon}</span>
-              <span style="min-width:0;">
-                <span class="tx-name" title="${esc(t.description)}">${esc(t.description)}</span>
-                ${t.notes ? `<div class="tx-sub">${esc(t.notes)}</div>` : ''}
-              </span>
-            </div>
-          </td>
-          <td><span class="badge badge-${t.type}">${esc(t.category)}</span></td>
-          <td class="text-muted" style="white-space:nowrap;">${F.friendlyDate(t.date, now())}</td>
-          <td class="text-right tx-amount">${amountCell(t)}</td>
-          <td>
-            <div class="row-actions">
-              <button type="button" class="icon-action" data-edit="${esc(t.id)}" title="Edit" aria-label="Edit ${esc(t.description)}">✏️</button>
-              <button type="button" class="icon-action danger" data-delete="${esc(t.id)}" title="Delete" aria-label="Delete ${esc(t.description)}">🗑️</button>
-            </div>
-          </td>`;
-        list.appendChild(tr);
+        list.appendChild(el('tr', null, [
+          descriptionCell(t, t.notes || null, true),
+          el('td', null, [badgeNode(t.category, t.type)]),
+          el('td', { class: 'text-muted', style: 'white-space:nowrap;', text: F.friendlyDate(t.date, now()) }),
+          el('td', { class: 'text-right tx-amount' }, [amountNode(t)]),
+          el('td', null, [
+            el('div', { class: 'row-actions' }, [
+              actionButton('✏️', 'edit', t.id, 'Edit', `Edit ${t.description}`),
+              actionButton('🗑️', 'delete', t.id, 'Delete', `Delete ${t.description}`, true)
+            ])
+          ])
+        ]));
       });
     }
 
@@ -456,31 +567,24 @@
     if (!body) return;
 
     const recent = F.sortTransactions(state.transactions).slice(0, 5);
-    body.innerHTML = '';
+    clearEl(body);
 
     if (!recent.length) {
-      body.innerHTML = `<tr><td colspan="3"><div class="empty-state" style="padding:1.5rem;">
-        <div class="empty-icon">💳</div><h3>Nothing here yet</h3>
-        <p>Your latest transactions will show up in this list.</p></div></td></tr>`;
+      body.appendChild(el('tr', null, [
+        el('td', { colspan: 3 }, [
+          emptyState('💳', 'Nothing here yet',
+            'Your latest transactions will show up in this list.', 'padding:1.5rem;')
+        ])
+      ]));
       return;
     }
 
     recent.forEach((t) => {
-      const m = F.meta(t.category);
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>
-          <div class="tx-desc">
-            <span class="tx-icon">${m.icon}</span>
-            <span style="min-width:0;">
-              <span class="tx-name" title="${esc(t.description)}">${esc(t.description)}</span>
-              <div class="tx-sub">${F.friendlyDate(t.date, now())}</div>
-            </span>
-          </div>
-        </td>
-        <td><span class="badge">${esc(t.category)}</span></td>
-        <td class="text-right tx-amount">${amountCell(t)}</td>`;
-      body.appendChild(tr);
+      body.appendChild(el('tr', null, [
+        descriptionCell(t, F.friendlyDate(t.date, now()), true),
+        el('td', null, [badgeNode(t.category)]),
+        el('td', { class: 'text-right tx-amount' }, [amountNode(t)])
+      ]));
     });
   }
 
@@ -495,28 +599,33 @@
       .slice(0, 10);
     const totalExpense = F.computeSummary(scoped).expense;
 
-    body.innerHTML = '';
+    clearEl(body);
 
     if (!expenses.length) {
-      body.innerHTML = `<tr><td colspan="5"><div class="empty-state" style="padding:1.5rem;">
-        <div class="empty-icon">📊</div><h3>No expenses in this range</h3>
-        <p>Widen the date range or log an expense to populate this table.</p></div></td></tr>`;
+      body.appendChild(el('tr', null, [
+        el('td', { colspan: 5 }, [
+          emptyState('📊', 'No expenses in this range',
+            'Widen the date range or log an expense to populate this table.', 'padding:1.5rem;')
+        ])
+      ]));
       return;
     }
 
     expenses.forEach((t) => {
-      const m = F.meta(t.category);
       const share = F.pct(t.amount, totalExpense, 1);
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><div class="tx-desc"><span class="tx-icon">${m.icon}</span><span class="tx-name">${esc(t.description)}</span></div></td>
-        <td><span class="badge">${esc(t.category)}</span></td>
-        <td class="text-muted" style="white-space:nowrap;">${F.friendlyDate(t.date, now())}</td>
-        <td class="text-right tx-amount text-danger">-${money(t.amount)}</td>
-        <td class="text-right" style="white-space:nowrap;">
-          <span class="text-muted" style="font-variant-numeric:tabular-nums;">${state.privacy ? '••%' : share + '%'}</span>
-        </td>`;
-      body.appendChild(tr);
+      body.appendChild(el('tr', null, [
+        descriptionCell(t, null, false),
+        el('td', null, [badgeNode(t.category)]),
+        el('td', { class: 'text-muted', style: 'white-space:nowrap;', text: F.friendlyDate(t.date, now()) }),
+        el('td', { class: 'text-right tx-amount text-danger', text: `-${money(t.amount)}` }),
+        el('td', { class: 'text-right', style: 'white-space:nowrap;' }, [
+          el('span', {
+            class: 'text-muted',
+            style: 'font-variant-numeric:tabular-nums;',
+            text: state.privacy ? '••%' : `${share}%`
+          })
+        ])
+      ]));
     });
   }
 
@@ -524,36 +633,88 @@
    * Render: budgets
    * ==================================================================== */
 
-  function budgetRowMarkup(b, withActions) {
+  /** One budget line: header, progress bar and (optionally) edit/remove actions. */
+  function budgetRowNode(b, withActions) {
     const fillClass = b.status === 'over' ? 'over' : b.status === 'warn' ? 'warn' : '';
-    const width = Math.min(100, b.usedPct);
-    return `
-      <div class="budget-row-head">
-        <span class="budget-title"><span>${b.icon}</span> ${esc(b.category)}</span>
-        <span class="budget-nums">
-          <strong>${money(b.spent)}</strong> / ${money(b.limit)}
-          ${b.status === 'over'
-            ? `<span class="text-danger" style="font-weight:700;"> · ${money(Math.abs(b.remaining))} over</span>`
-            : b.status === 'warn'
-              ? `<span class="text-warning" style="font-weight:700;"> · ${b.usedPct}% used</span>`
-              : ` · ${money(b.remaining)} left`}
-        </span>
-      </div>
-      <div class="progress"><div class="progress-fill ${fillClass}" style="width:${width}%; --fill-color:${b.color};"></div></div>
-      ${withActions
-        ? `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:.55rem;gap:.5rem;flex-wrap:wrap;">
-             <span class="text-muted" style="font-size:.75rem;">
-               ${b.status === 'over'
-                 ? 'Limit reached for this month.'
-                 : `Safe to spend ${money(b.dailySafe)}/day for the rest of the month.`}
-             </span>
-             <div class="row-actions">
-               <button type="button" class="icon-action" data-edit-budget="${esc(b.id)}" title="Edit" aria-label="Edit ${esc(b.category)} budget">✏️</button>
-               <button type="button" class="icon-action danger" data-delete-budget="${esc(b.id)}" title="Remove" aria-label="Remove ${esc(b.category)} budget">🗑️</button>
-             </div>
-           </div>`
-        : ''}`;
-}
+
+    const status = b.status === 'over'
+      ? el('span', { class: 'text-danger', style: 'font-weight:700;', text: ` · ${money(Math.abs(b.remaining))} over` })
+      : b.status === 'warn'
+        ? el('span', { class: 'text-warning', style: 'font-weight:700;', text: ` · ${b.usedPct}% used` })
+        : ` · ${money(b.remaining)} left`;
+
+    const children = [
+      el('div', { class: 'budget-row-head' }, [
+        el('span', { class: 'budget-title' }, [
+          el('span', { text: b.icon }),
+          ` ${b.category}`
+        ]),
+        el('span', { class: 'budget-nums' }, [
+          el('strong', { text: money(b.spent) }),
+          ` / ${money(b.limit)}`,
+          status
+        ])
+      ]),
+      progressBar(b.usedPct, b.color, null, fillClass)
+    ];
+
+    if (withActions) {
+      children.push(el('div', {
+        style: 'display:flex;justify-content:space-between;align-items:center;margin-top:.55rem;gap:.5rem;flex-wrap:wrap;'
+      }, [
+        el('span', {
+          class: 'text-muted',
+          style: 'font-size:.75rem;',
+          text: b.status === 'over'
+            ? 'Limit reached for this month.'
+            : `Safe to spend ${money(b.dailySafe)}/day for the rest of the month.`
+        }),
+        el('div', { class: 'row-actions' }, [
+          actionButton('✏️', 'editBudget', b.id, 'Edit', `Edit ${b.category} budget`),
+          actionButton('🗑️', 'deleteBudget', b.id, 'Remove', `Remove ${b.category} budget`, true)
+        ])
+      ]));
+    }
+
+    return el('div', { class: `budget-row${b.status === 'over' ? ' is-over' : ''}` }, children);
+  }
+
+  /** The "spent of X across N budgets" summary on the Budgets page. */
+  function renderBudgetRollup(host, rollup) {
+    clearEl(host);
+
+    if (!rollup.count) {
+      host.appendChild(emptyState('🎯', 'No budgets yet',
+        'Create your first monthly limit to see progress here.'));
+      return;
+    }
+
+    const fillClass = rollup.overCount ? 'over' : rollup.usedPct >= 75 ? 'warn' : '';
+    const notes = [
+      el('span', { text: `${rollup.usedPct}% used` }),
+      el('span', { text: '·' }),
+      el('span', { text: `${money(rollup.remaining)} remaining` })
+    ];
+    if (rollup.overCount) {
+      notes.push(el('span', { class: 'text-danger', style: 'font-weight:700;', text: `· ${rollup.overCount} over limit` }));
+    }
+    if (rollup.warnCount) {
+      notes.push(el('span', { class: 'text-warning', style: 'font-weight:600;', text: `· ${rollup.warnCount} close to limit` }));
+    }
+
+    appendAll(host, [
+      el('div', { style: 'display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;' }, [
+        el('span', { style: 'font-size:1.5rem;font-weight:750;font-variant-numeric:tabular-nums;', text: money(rollup.spent) }),
+        el('span', {
+          class: 'text-muted',
+          style: 'font-size:.85rem;',
+          text: `of ${money(rollup.limit)} across ${rollup.count} budget${rollup.count === 1 ? '' : 's'}`
+        })
+      ]),
+      progressBar(rollup.usedPct, null, 'height:10px;', fillClass),
+      el('div', { style: 'display:flex;gap:1rem;flex-wrap:wrap;font-size:.8rem;color:var(--text-muted);' }, notes)
+    ]);
+  }
 
   function renderBudgets() {
     const evaluated = budgetsEvaluated();
@@ -569,56 +730,26 @@
     // Dashboard pulse: the three tightest budgets
     const pulse = $('dashboardBudgets');
     if (pulse) {
-      pulse.innerHTML = '';
+      clearEl(pulse);
       if (!evaluated.length) {
-        pulse.innerHTML = emptyMarkup('🎯', 'No budgets set', 'Set a monthly limit per category to start tracking.');
+        pulse.appendChild(emptyState('🎯', 'No budgets set',
+          'Set a monthly limit per category to start tracking.'));
       } else {
-        evaluated.slice(0, 3).forEach((b) => {
-          const div = document.createElement('div');
-          div.className = `budget-row${b.status === 'over' ? ' is-over' : ''}`;
-          div.innerHTML = budgetRowMarkup(b, false);
-          pulse.appendChild(div);
-        });
+        evaluated.slice(0, 3).forEach((b) => pulse.appendChild(budgetRowNode(b, false)));
       }
     }
 
-    // Budgets page
     const rollupEl = $('budgetRollup');
-    if (rollupEl) {
-      rollupEl.innerHTML = '';
-      if (!rollup.count) {
-        rollupEl.innerHTML = emptyMarkup('🎯', 'No budgets yet', 'Create your first monthly limit to see progress here.');
-      } else {
-        const width = Math.min(100, rollup.usedPct);
-        const fillClass = rollup.overCount ? 'over' : rollup.usedPct >= 75 ? 'warn' : '';
-        rollupEl.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;">
-            <span style="font-size:1.5rem;font-weight:750;font-variant-numeric:tabular-nums;">${money(rollup.spent)}</span>
-            <span class="text-muted" style="font-size:.85rem;">of ${money(rollup.limit)} across ${rollup.count} budget${rollup.count === 1 ? '' : 's'}</span>
-          </div>
-          <div class="progress" style="height:10px;"><div class="progress-fill ${fillClass}" style="width:${width}%;"></div></div>
-          <div style="display:flex;gap:1rem;flex-wrap:wrap;font-size:.8rem;color:var(--text-muted);">
-            <span>${rollup.usedPct}% used</span>
-            <span>·</span>
-            <span>${money(rollup.remaining)} remaining</span>
-            ${rollup.overCount ? `<span class="text-danger" style="font-weight:700;">· ${rollup.overCount} over limit</span>` : ''}
-            ${rollup.warnCount ? `<span class="text-warning" style="font-weight:600;">· ${rollup.warnCount} close to limit</span>` : ''}
-          </div>`;
-      }
-    }
+    if (rollupEl) renderBudgetRollup(rollupEl, rollup);
 
     const listEl = $('budgetList');
     if (listEl) {
-      listEl.innerHTML = '';
+      clearEl(listEl);
       if (!evaluated.length) {
-        listEl.innerHTML = emptyMarkup('🎯', 'No budgets yet', 'Pick a category and a monthly limit to get started.');
+        listEl.appendChild(emptyState('🎯', 'No budgets yet',
+          'Pick a category and a monthly limit to get started.'));
       } else {
-        evaluated.forEach((b) => {
-          const div = document.createElement('div');
-          div.className = `budget-row${b.status === 'over' ? ' is-over' : ''}`;
-          div.innerHTML = budgetRowMarkup(b, true);
-          listEl.appendChild(div);
-        });
+        evaluated.forEach((b) => listEl.appendChild(budgetRowNode(b, true)));
       }
     }
 
@@ -632,50 +763,77 @@
    * Render: goals
    * ==================================================================== */
 
-  function ringMarkup(g) {
+  /** Circular progress indicator for a goal, built from real SVG nodes. */
+  function ringNode(g) {
     const r = 26;
     const circumference = 2 * Math.PI * r;
     const offset = circumference * (1 - Math.min(1, g.progressPct / 100));
-    return `
-      <div class="goal-ring">
-        <svg width="62" height="62" viewBox="0 0 62 62" aria-hidden="true">
-          <circle class="ring-track" cx="31" cy="31" r="${r}"></circle>
-          <circle class="ring-fill" cx="31" cy="31" r="${r}" stroke="${g.color}"
-            stroke-dasharray="${circumference.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"></circle>
-        </svg>
-        <span class="goal-ring-pct">${state.privacy ? '••%' : Math.round(g.progressPct) + '%'}</span>
-      </div>`;
+
+    const ring = svgEl('svg', { width: 62, height: 62, viewBox: '0 0 62 62', 'aria-hidden': 'true' }, [
+      svgEl('circle', { class: 'ring-track', cx: 31, cy: 31, r }),
+      svgEl('circle', {
+        class: 'ring-fill',
+        cx: 31,
+        cy: 31,
+        r,
+        stroke: g.color,
+        'stroke-dasharray': circumference.toFixed(2),
+        'stroke-dashoffset': offset.toFixed(2)
+      })
+    ]);
+
+    return el('div', { class: 'goal-ring' }, [
+      ring,
+      el('span', { class: 'goal-ring-pct', text: state.privacy ? '••%' : `${Math.round(g.progressPct)}%` })
+    ]);
   }
 
-  function goalCardMarkup(g, full) {
-    const eta = g.monthsLeft == null
-      ? 'Add savings to project an ETA'
-      : g.monthsLeft === 0
-        ? 'On pace to finish this month'
-        : `≈ ${g.monthsLeft} month${g.monthsLeft === 1 ? '' : 's'} left at ${money(g.monthlyPace)}/mo`;
+  function goalEtaText(g) {
+    if (g.monthsLeft == null) return 'Add savings to project an ETA';
+    if (g.monthsLeft === 0) return 'On pace to finish this month';
+    return `≈ ${g.monthsLeft} month${g.monthsLeft === 1 ? '' : 's'} left at ${money(g.monthlyPace)}/mo`;
+  }
 
-    return `
-      <div class="goal-top">
-        ${ringMarkup(g)}
-        <div style="min-width:0;flex:1;">
-          <div class="goal-name">${g.icon} ${esc(g.name)}</div>
-          <div class="goal-sub">${g.complete ? '🎉 Goal reached' : eta}</div>
-        </div>
-      </div>
-      <div class="goal-meta">
-        <span><strong>${money(g.saved)}</strong> saved</span>
-        <span>of ${money(g.target)}</span>
-      </div>
-      <div class="progress"><div class="progress-fill" style="width:${Math.min(100, g.progressPct)}%; --fill-color:${g.color};"></div></div>
-      ${full
-        ? `<div class="row-actions" style="justify-content:space-between;margin-top:.25rem;">
-             <button type="button" class="btn btn-secondary btn-sm" data-contribute="${esc(g.id)}">＋ Add money</button>
-             <span class="row-actions">
-               <button type="button" class="icon-action" data-edit-goal="${esc(g.id)}" title="Edit" aria-label="Edit ${esc(g.name)}">✏️</button>
-               <button type="button" class="icon-action danger" data-delete-goal="${esc(g.id)}" title="Delete" aria-label="Delete ${esc(g.name)}">🗑️</button>
-             </span>
-           </div>`
-        : ''}`;
+  /** Compact goal row used by the dashboard card. */
+  function goalMiniNode(g) {
+    return el('div', { style: 'display:flex;align-items:center;gap:.85rem;' }, [
+      ringNode(g),
+      el('div', { style: 'min-width:0;flex:1;' }, [
+        el('div', { class: 'goal-name', style: 'font-size:.9rem;', text: `${g.icon} ${g.name}` }),
+        el('div', { class: 'goal-sub', text: `${money(g.saved)} of ${money(g.target)}` }),
+        progressBar(g.progressPct, g.color, 'height:6px;margin-top:.35rem;')
+      ])
+    ]);
+  }
+
+  /** Full goal card for the Goals page. */
+  function goalCardNode(g) {
+    return el('div', { class: `goal-card${g.complete ? ' is-complete' : ''}` }, [
+      el('div', { class: 'goal-top' }, [
+        ringNode(g),
+        el('div', { style: 'min-width:0;flex:1;' }, [
+          el('div', { class: 'goal-name', text: `${g.icon} ${g.name}` }),
+          el('div', { class: 'goal-sub', text: g.complete ? '🎉 Goal reached' : goalEtaText(g) })
+        ])
+      ]),
+      el('div', { class: 'goal-meta' }, [
+        el('span', null, [el('strong', { text: money(g.saved) }), ' saved']),
+        el('span', { text: `of ${money(g.target)}` })
+      ]),
+      progressBar(g.progressPct, g.color),
+      el('div', { class: 'row-actions', style: 'justify-content:space-between;margin-top:.25rem;' }, [
+        el('button', {
+          type: 'button',
+          class: 'btn btn-secondary btn-sm',
+          text: '＋ Add money',
+          dataset: { contribute: String(g.id) }
+        }),
+        el('span', { class: 'row-actions' }, [
+          actionButton('✏️', 'editGoal', g.id, 'Edit', `Edit ${g.name}`),
+          actionButton('🗑️', 'deleteGoal', g.id, 'Delete', `Delete ${g.name}`, true)
+        ])
+      ])
+    ]);
   }
 
   function renderGoals() {
@@ -683,44 +841,25 @@
 
     const mini = $('dashboardGoals');
     if (mini) {
-      mini.innerHTML = '';
+      clearEl(mini);
       if (!evaluated.length) {
-        mini.innerHTML = emptyMarkup('🏦', 'No goals yet', 'Create a savings goal to track progress automatically.');
+        mini.appendChild(emptyState('🏦', 'No goals yet',
+          'Create a savings goal to track progress automatically.'));
       } else {
-        evaluated.slice(0, 3).forEach((g) => {
-          const div = document.createElement('div');
-          div.style.cssText = 'display:flex;align-items:center;gap:.85rem;';
-          div.innerHTML = `
-            ${ringMarkup(g)}
-            <div style="min-width:0;flex:1;">
-              <div class="goal-name" style="font-size:.9rem;">${g.icon} ${esc(g.name)}</div>
-              <div class="goal-sub">${money(g.saved)} of ${money(g.target)}</div>
-              <div class="progress" style="height:6px;margin-top:.35rem;">
-                <div class="progress-fill" style="width:${Math.min(100, g.progressPct)}%; --fill-color:${g.color};"></div>
-              </div>
-            </div>`;
-          mini.appendChild(div);
-        });
+        evaluated.slice(0, 3).forEach((g) => mini.appendChild(goalMiniNode(g)));
       }
     }
 
     const grid = $('goalGrid');
     if (grid) {
-      grid.innerHTML = '';
+      clearEl(grid);
       if (!evaluated.length) {
-        const wrap = document.createElement('div');
-        wrap.className = 'card';
-        wrap.style.gridColumn = '1 / -1';
-        wrap.innerHTML = emptyMarkup('🏦', 'No savings goals yet',
-          'Create a goal, then link savings transactions to it — progress updates itself.');
-        grid.appendChild(wrap);
+        grid.appendChild(el('div', { class: 'card', style: 'grid-column:1 / -1;' }, [
+          emptyState('🏦', 'No savings goals yet',
+            'Create a goal, then link savings transactions to it — progress updates itself.')
+        ]));
       } else {
-        evaluated.forEach((g) => {
-          const card = document.createElement('div');
-          card.className = `goal-card${g.complete ? ' is-complete' : ''}`;
-          card.innerHTML = goalCardMarkup(g, true);
-          grid.appendChild(card);
-        });
+        evaluated.forEach((g) => grid.appendChild(goalCardNode(g)));
       }
     }
   }
@@ -734,32 +873,37 @@
     if (!container) return;
 
     const groups = F.groupByCategory(scopedTransactions(), 'expense');
-    container.innerHTML = '';
+    clearEl(container);
 
     if (!groups.length) {
-      container.innerHTML = emptyMarkup('📊', 'No expense data', 'Log an expense in this range to see the breakdown.');
+      container.appendChild(emptyState('📊', 'No expense data',
+        'Log an expense in this range to see the breakdown.'));
       return;
     }
 
     groups.forEach((g) => {
-      const div = document.createElement('div');
-      div.innerHTML = `
-        <div style="display:flex;justify-content:space-between;gap:1rem;font-size:.85rem;margin-bottom:.35rem;">
-          <span style="font-weight:600;">${g.icon} ${esc(g.category)}</span>
-          <span class="text-muted" style="font-variant-numeric:tabular-nums;">
-            ${money(g.total)} · ${state.privacy ? '••%' : g.share + '%'}
-          </span>
-        </div>
-        <div class="progress" style="height:7px;">
-          <div class="progress-fill" style="width:${g.share}%; --fill-color:${g.color};"></div>
-        </div>`;
-      container.appendChild(div);
+      container.appendChild(el('div', null, [
+        el('div', { style: 'display:flex;justify-content:space-between;gap:1rem;font-size:.85rem;margin-bottom:.35rem;' }, [
+          el('span', { style: 'font-weight:600;', text: `${g.icon} ${g.category}` }),
+          el('span', {
+            class: 'text-muted',
+            style: 'font-variant-numeric:tabular-nums;',
+            text: `${money(g.total)} · ${state.privacy ? '••%' : `${g.share}%`}`
+          })
+        ]),
+        progressBar(g.share, g.color, 'height:7px;')
+      ]));
     });
   }
 
-  function insightMarkup(i) {
-    return `<span class="insight-icon">${i.icon}</span>
-      <div><h4>${esc(i.title)}</h4><p>${esc(i.body)}</p></div>`;
+  function insightNode(i) {
+    return el('div', { class: `insight tone-${i.tone}` }, [
+      el('span', { class: 'insight-icon', text: i.icon }),
+      el('div', null, [
+        el('h4', { text: i.title }),
+        el('p', { text: i.body })
+      ])
+    ]);
   }
 
   function renderInsights() {
@@ -772,15 +916,10 @@
     });
 
     ['dashboardInsights', 'analyticsInsights'].forEach((id) => {
-      const el = $(id);
-      if (!el) return;
-      el.innerHTML = '';
-      list.forEach((insight) => {
-        const div = document.createElement('div');
-        div.className = `insight tone-${insight.tone}`;
-        div.innerHTML = insightMarkup(insight);
-        el.appendChild(div);
-      });
+      const host = $(id);
+      if (!host) return;
+      clearEl(host);
+      list.forEach((insight) => host.appendChild(insightNode(insight)));
     });
 
     const badge = $('trendBadge');
@@ -789,14 +928,6 @@
       badge.textContent = scoped.length ? `${s.savingsRate}% of income kept` : 'No data yet';
       badge.className = `badge ${s.savingsRate >= 20 ? 'badge-income' : 'badge-expense'}`;
     }
-  }
-
-  function emptyMarkup(icon, title, body) {
-    return `<div class="empty-state">
-      <div class="empty-icon">${icon}</div>
-      <h3>${esc(title)}</h3>
-      <p>${esc(body)}</p>
-    </div>`;
   }
 
   /* ====================================================================== *
@@ -816,9 +947,11 @@
       ['expenseChart', 'trendChart'].forEach((id) => {
         const c = $(id);
         if (c && c.parentElement) {
-          c.parentElement.innerHTML = `<div class="empty-state" style="height:100%;">
-            <div class="empty-icon">📉</div><h3>Charts unavailable offline</h3>
-            <p>Chart.js could not be loaded from the CDN. Every number and table still works.</p></div>`;
+          const host = c.parentElement;
+          clearEl(host);
+          host.appendChild(emptyState('📉', 'Charts unavailable offline',
+            'Chart.js could not be loaded from the CDN. Every number and table still works.',
+            'height:100%;'));
         }
       });
       return;

@@ -82,14 +82,22 @@ SpendWise/
 │
 └── tests/
     ├── finance.test.js           47 unit tests for the money maths
-    ├── app.integration.test.js   38 tests that boot app.html in jsdom
+    ├── app.integration.test.js   43 tests that boot app.html in jsdom
     └── auth.test.js              17 tests for auth.js and the auth pages
 ```
 
-The split matters: **`js/finance.js` contains no DOM access at all.** Every calculation — summaries,
-monthly buckets, budget status, goal progress, insight generation, CSV — is a pure function that
-takes data and returns data. That is what makes the maths testable in plain Node, and it means the
-UI layer can only present numbers, never invent them.
+Two rules keep the codebase honest, and both are enforced by tests:
+
+**`js/finance.js` contains no DOM access at all.** Every calculation — summaries, monthly buckets,
+budget status, goal progress, insight generation, CSV — is a pure function that takes data and
+returns data. That is what makes the maths testable in plain Node, and it means the UI layer can
+only present numbers, never invent them.
+
+**`dashboard.js` builds the UI with the DOM API, not HTML strings.** Rows, budget bars, goal cards,
+SVG progress rings and insight cards are all constructed with `document.createElement` /
+`createElementNS` and filled with `textContent`. There is no `innerHTML`, `insertAdjacentHTML` or
+`document.write` anywhere in the app's JavaScript, and no inline `onclick` in the HTML — so nothing
+read back out of your ledger can ever be parsed as markup.
 
 ---
 
@@ -97,7 +105,7 @@ UI layer can only present numbers, never invent them.
 
 ```bash
 npm install     # only needed for jsdom (a dev dependency)
-npm test        # 102 tests
+npm test        # 107 tests
 npm run test:unit   # domain logic only
 npm run test:app    # boots app.html in jsdom only
 ```
@@ -109,6 +117,12 @@ on the rendered DOM: that metric cards show converted totals, that the transacti
 rows with no inline `onclick` handlers, that submitting the form validates and persists, that
 privacy mode leaves no unmasked amount in the table, that deleting offers a working undo, and that
 the app still boots cleanly when Chart.js is unreachable.
+
+Six of them are guard rails for the "plain HTML/CSS/JS" brief, and they fail on regressions rather
+than on intent: no `innerHTML`/`document.write` in any app script, no inline event handlers in any
+page, every `<script src>` either a real local file or the approved Chart.js CDN, a submitted
+description landing in the table as a single text node instead of parsed markup, and goal rings
+created in the SVG namespace via `createElementNS`.
 
 ---
 
@@ -130,8 +144,10 @@ Clear your data from **Settings → Clear all data**, or just clear browser stor
 ## 💻 Built with
 
 - HTML5 & CSS3 — custom properties, grid, flexbox, no preprocessor
-- Vanilla JavaScript (ES2020+) — no framework, no bundler
-- [Chart.js](https://www.chartjs.org/) via CDN for the donut and trend charts
+- Vanilla JavaScript (ES2020+) — no framework, no bundler, no transpiler; the UI is built with the
+  DOM API (`createElement` / `createElementNS` + `textContent`)
+- [Chart.js](https://www.chartjs.org/) via CDN for the donut and trend charts — the one external
+  script, and the app degrades gracefully if it cannot be reached
 - [Node's built-in test runner](https://nodejs.org/api/test.html) + jsdom for tests
 
 ---
