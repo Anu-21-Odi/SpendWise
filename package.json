@@ -1,0 +1,19 @@
+{
+  "name": "spendwise",
+  "version": "2.0.0",
+  "private": true,
+  "description": "SpendWise — a local-first personal finance tracker. Vanilla HTML/CSS/JS, no build step.",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "test:unit": "node --test tests/finance.test.js",
+    "test:app": "node --test tests/app.integration.test.js",
+    "start": "python3 -m http.server 4173 --bind 0.0.0.0"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

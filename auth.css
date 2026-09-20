@@ -1,0 +1,232 @@
+/* ==========================================================================
+   SpendWise — auth.css
+   Shared styles for login.html and signup.html.
+   Supersedes the unused style2.css / stylelogin.css drafts.
+   ========================================================================== */
+
+:root {
+  --auth-primary: #4f46e5;
+  --auth-primary-hover: #4338ca;
+  --auth-accent: #8b5cf6;
+  --auth-ink: #0f172a;
+  --auth-muted: #64748b;
+  --auth-line: #e2e8f0;
+  --auth-bg: #f6f7fb;
+  --auth-card: #ffffff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--auth-ink);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.auth-body {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.25rem;
+  background-color: var(--auth-bg);
+  overflow: hidden;
+}
+
+/* Aurora wash, matching the app shell */
+.auth-body::before {
+  content: '';
+  position: fixed;
+  inset: -20vmax;
+  z-index: -1;
+  background:
+    radial-gradient(36vmax 36vmax at 14% 10%, rgba(99, 102, 241, 0.30), transparent 62%),
+    radial-gradient(32vmax 32vmax at 86% 6%, rgba(217, 70, 239, 0.20), transparent 60%),
+    radial-gradient(38vmax 38vmax at 68% 94%, rgba(16, 185, 129, 0.18), transparent 64%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.auth-container { width: 100%; max-width: 440px; }
+
+.auth-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1.1rem;
+  color: var(--auth-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.auth-back:hover { color: var(--auth-primary); transform: translateX(-2px); }
+
+.auth-card {
+  padding: 2.25rem 2rem;
+  border: 1px solid var(--auth-line);
+  border-radius: 22px;
+  background: var(--auth-card);
+  box-shadow: 0 24px 50px -22px rgba(15, 23, 42, 0.28), 0 4px 12px -6px rgba(15, 23, 42, 0.08);
+}
+
+.auth-header { text-align: center; margin-bottom: 1.6rem; }
+
+.auth-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--auth-ink);
+  text-decoration: none;
+}
+
+.auth-logo .mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6 55%, #d946ef);
+  font-size: 1rem;
+  box-shadow: 0 8px 18px -8px rgba(99, 102, 241, 0.6);
+}
+
+.auth-logo span {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6 55%, #d946ef);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.auth-header h1 { font-size: 1.45rem; font-weight: 750; letter-spacing: -0.02em; }
+.auth-header p { margin-top: 0.3rem; font-size: 0.875rem; color: var(--auth-muted); }
+
+/* Honest note about what this auth actually is */
+.auth-note {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 1.4rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.08);
+  font-size: 0.78rem;
+  color: var(--auth-muted);
+  line-height: 1.5;
+}
+
+.auth-note strong { color: var(--auth-ink); }
+
+.auth-form { display: flex; flex-direction: column; gap: 1rem; }
+
+.form-group { display: flex; flex-direction: column; gap: 0.35rem; }
+
+.form-group label { font-size: 0.82rem; font-weight: 600; color: var(--auth-ink); }
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem 0.95rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.form-group input::placeholder { color: #94a3b8; }
+
+.form-group input:focus {
+  border-color: var(--auth-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+}
+
+.form-group input.invalid { border-color: #ef4444; }
+.form-group input.invalid:focus { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.14); }
+
+.field-error {
+  display: none;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #ef4444;
+}
+.field-error.visible { display: block; }
+
+.form-label-row { display: flex; justify-content: space-between; align-items: center; }
+
+.forgot-link {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--auth-primary);
+  text-decoration: none;
+}
+.forgot-link:hover { text-decoration: underline; }
+
+.form-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--auth-muted);
+}
+.form-checkbox input { margin-top: 2px; accent-color: var(--auth-primary); }
+.form-checkbox a { color: var(--auth-primary); text-decoration: none; }
+.form-checkbox a:hover { text-decoration: underline; }
+
+.btn-full {
+  width: 100%;
+  padding: 0.85rem;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6 55%, #d946ef);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 12px 26px -12px rgba(99, 102, 241, 0.7);
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.btn-full:hover { transform: translateY(-1px); box-shadow: 0 16px 30px -12px rgba(99, 102, 241, 0.7); }
+.btn-full:active { transform: translateY(1px); }
+
+.auth-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--auth-muted);
+}
+.auth-footer a { color: var(--auth-primary); font-weight: 650; text-decoration: none; }
+.auth-footer a:hover { text-decoration: underline; }
+
+.auth-perks {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--auth-muted);
+}
+.auth-perks div { display: flex; align-items: center; gap: 0.5rem; }
+
+.auth-legal {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--auth-muted);
+}
+.auth-legal a { color: var(--auth-muted); }
+
+@media (max-width: 480px) {
+  .auth-card { padding: 1.75rem 1.35rem; border-radius: 18px; }
+  .auth-body { padding: 1.75rem 1rem; }
+}
