@@ -627,3 +627,87 @@ test('the trend chart shows all-zero series for an empty ledger instead of a fak
   assert.deepEqual(local(trend.data.datasets[0].data), [0, 0, 0, 0, 0, 0]);
   assert.deepEqual(local(trend.data.datasets[1].data), [0, 0, 0, 0, 0, 0]);
 });
+
+/* ------------------------------------------------------------------ *
+ * Vanilla-JS guard rails
+ *
+ * The brief is plain HTML + CSS + JavaScript with the UI built through the
+ * DOM API (Chart.js is the one approved external script). These tests fail
+ * if a framework, a bundler, or innerHTML templating creeps back in.
+ * ------------------------------------------------------------------ */
+
+const APP_JS = ['dashboard.js', 'script.js', 'js/finance.js', 'js/auth.js', 'js/auth-pages.js'];
+const APP_HTML = ['index.html', 'login.html', 'signup.html', 'app.html'];
+
+/** The only external <script> the app is allowed to load. */
+const ALLOWED_EXTERNAL_SCRIPTS = [/^https:\/\/cdn\.jsdelivr\.net\/npm\/chart\.js@/];
+
+/** Drop comments so documentation may mention an API without tripping the guard. */
+function stripComments(source) {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:"'\\])\/\/[^\n]*/g, '$1');
+}
+
+test('no app script builds markup with innerHTML or document.write', () => {
+  const forbidden = ['innerHTML', 'insertAdjacentHTML', 'outerHTML', 'document.write'];
+  APP_JS.forEach((file) => {
+    const source = stripComments(read(file));
+    forbidden.forEach((api) => {
+      assert.equal(source.includes(api), false, `${file} still builds markup with ${api}`);
+    });
+  });
+});
+
+test('no page wires behaviour with inline event handlers', () => {
+  APP_HTML.forEach((file) => {
+    const matches = read(file).match(/<[a-z][^>]*?\son[a-z]+\s*=/gi) || [];
+    assert.deepEqual(matches, [], `${file} wires behaviour inline: ${matches.join(', ')}`);
+  });
+});
+
+test('every script tag is a local file or the approved Chart.js CDN', () => {
+  APP_HTML.forEach((file) => {
+    const srcs = [...read(file).matchAll(/<script[^>]+src=["']([^"']+)["']/g)].map((m) => m[1]);
+    assert.ok(srcs.length > 0, `${file} should load at least one script`);
+    srcs.forEach((src) => {
+      if (!/^[a-z]+:\/\//i.test(src)) {
+        assert.match(src, /^[a-z0-9_\-./]+\.js$/i, `${file}: unexpected local src "${src}"`);
+        assert.ok(fs.existsSync(path.join(ROOT, src)), `${file} references missing file ${src}`);
+        return;
+      }
+      assert.ok(
+        ALLOWED_EXTERNAL_SCRIPTS.some((re) => re.test(src)),
+        `${file} loads an unapproved external script: ${src}`
+      );
+    });
+  });
+});
+
+test('a rendered description is one text node, never parsed markup', async () => {
+  const { window, document, $ } = await boot();
+  $('txDescription').value = 'Rent <b>& utilities</b>';
+  $('txAmount').value = '1200';
+  $('txDate').value = '2026-09-15';
+  $('transactionForm').dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
+
+  const name = document.querySelector('#transactionList .tx-name');
+  assert.ok(name, 'description cell should be rendered');
+  assert.equal(name.childNodes.length, 1, 'description should be a single text node');
+  assert.equal(name.childNodes[0].nodeType, 3, 'expected a TEXT_NODE, not an element');
+  assert.equal(name.childNodes[0].data, 'Rent <b>& utilities</b>');
+  assert.equal(name.querySelector('b'), null, 'the description was parsed as markup');
+});
+
+test('goal rings are real SVG nodes in the SVG namespace', async () => {
+  const demo = demoFor(4242);
+  const { document } = await boot({ transactions: demo.transactions, goals: demo.goals });
+
+  const rings = document.querySelectorAll('#goalGrid circle.ring-fill');
+  assert.equal(rings.length, demo.goals.length, 'one ring per goal');
+  rings.forEach((ring) => {
+    assert.equal(ring.namespaceURI, 'http://www.w3.org/2000/svg',
+      'rings must be built with createElementNS, not parsed from a string');
+    assert.ok(Number(ring.getAttribute('stroke-dashoffset')) >= 0, 'dash offset should be a number');
+  });
+});
