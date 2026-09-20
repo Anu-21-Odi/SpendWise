@@ -1,13 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SpendWise - Master Your Money</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SpendWise — a private, local-first personal finance tracker. Budgets, savings goals, multi-currency support and real analytics, with no server and no account required.">
+  <meta name="color-scheme" content="light">
+  <title>SpendWise — Master Your Money</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 </head>
 <body>
- 
+
 <nav class="navbar">
   <div class="container nav-container">
     <a href="index.html" class="logo">Spend<span>Wise</span></a>
@@ -15,17 +22,15 @@
     <ul class="nav-links nav-menu">
       <li><a href="#demo">Live Demo</a></li>
       <li><a href="#features">Features</a></li>
-      <li><a href="#stats">Stats</a></li>
-      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#privacy">Privacy</a></li>
     </ul>
 
-    <!-- Auth Action Buttons -->
     <div class="nav-actions">
       <a href="login.html" class="btn btn-outline nav-login">Log In</a>
       <a href="signup.html" class="btn btn-primary nav-cta">Get Started</a>
     </div>
 
-    <!-- Hamburger Toggle Button -->
     <button class="mobile-menu-toggle" aria-label="Toggle navigation">
       <span class="hamburger-bar"></span>
       <span class="hamburger-bar"></span>
@@ -37,11 +42,14 @@
 <section class="hero">
   <div class="container hero-container">
     <div class="hero-content">
+      <span class="hero-eyebrow">💸 Free · open source · runs entirely in your browser</span>
       <h1>Master Your Money, Effortlessly</h1>
-      <p>Take control of your personal finances with real-time tracking, smart budget insights, and automated savings goals—all in one secure platform.</p>
+      <p>Track cash flow, set category budgets, watch savings goals fill up, and get insights that
+        are actually computed from your data — not generic advice. No server, no account required,
+        nothing leaves your device.</p>
       <div class="hero-buttons">
-        <a href="signup.html" class="btn btn-primary">Get Started</a>
-        <a href="#demo" class="btn btn-outline">Watch demo 🎮</a>
+        <a href="signup.html" class="btn btn-primary">Get started free</a>
+        <a href="#demo" class="btn btn-outline">Try the live demo 🎮</a>
       </div>
     </div>
     <div class="hero-preview">
@@ -58,140 +66,154 @@
   </div>
 </section>
 
-<!-- INTERACTIVE DEMO SECTION -->
-<section id="demo" class="demo-section" style="padding: 4rem 0; background-color: var(--bg-alt, #f8fafc);">
-  <div class="container" style="text-align: center;">
-    <div class="demo-header" style="margin-bottom: 2rem;">
-      <span style="background: rgba(79, 70, 229, 0.1); color: #4f46e5; font-size: 0.85rem; font-weight: 700; padding: 0.25rem 0.75rem; border-radius: 20px; text-transform: uppercase;">Interactive Sandbox</span>
-      <h2 style="margin-top: 0.5rem; font-size: 2rem;">Experience SpendWise Live</h2>
-      <p style="color: #6b7280; max-width: 600px; margin: 0.5rem auto 0;">No account required. Test transaction tracking, currency conversion, themes, and data exports right now.</p>
+<!-- INTERACTIVE DEMO -->
+<section id="demo" class="demo-section">
+  <div class="container demo-inner">
+    <div class="demo-header">
+      <span class="demo-badge">Interactive sandbox</span>
+      <h2>Experience SpendWise live</h2>
+      <p>No account required. This is the real app, embedded. Press <strong>N</strong> to add a
+        transaction, load the six-month demo dataset, set budgets, and switch themes or currencies.</p>
     </div>
 
-    <!-- Live App Embedded in Iframe -->
-    <div class="demo-frame-wrapper" style="border-radius: 12px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border: 1px solid #e2e8f0; max-width: 1100px; margin: 0 auto; background: #fff;">
-      <iframe src="app.html" title="SpendWise Interactive Demo" width="100%" height="720px" style="border: none; display: block;"></iframe>
+    <div class="demo-frame-wrapper">
+      <iframe src="app.html" title="SpendWise interactive demo" loading="lazy"></iframe>
     </div>
   </div>
 </section>
 
-<!-- Features Section -->
+<!-- FEATURES -->
 <section id="features" class="features">
   <div class="container">
     <div class="features-header">
-      <h2>Everything You Need to Manage Money</h2>
-      <p>Powerful features designed to give you total control over your financial future.</p>
+      <h2>Everything you need, nothing you don't</h2>
+      <p>Nine focused tools. Every number you see is derived from transactions you logged.</p>
     </div>
     <div class="features-grid">
-      <!-- Card 1 -->
-      <div class="feature-card">
-        <div class="feature-icon">📊</div>
-        <h3>Real-time Analytics</h3>
-        <p>Track your spending habits as they happen with automated category tagging and visual reports.</p>
-      </div>
-
-      <!-- Card 2 -->
       <div class="feature-card">
         <div class="feature-icon">🎯</div>
-        <h3>Smart Budgeting</h3>
-        <p>Set custom monthly spending limits and let our intelligent engine keep you on track.</p>
+        <h3>Budgets that warn you</h3>
+        <p>Set a monthly limit per category. SpendWise shows the safe daily spend remaining and flags
+          you at 75% and again the moment you go over.</p>
       </div>
 
-      <!-- Card 3 -->
       <div class="feature-card">
-        <div class="feature-icon">🔒</div>
-        <h3>Bank-Grade Security</h3>
-        <p>Your data is protected with 256-bit AES encryption and multi-factor authentication.</p>
+        <div class="feature-icon">🏦</div>
+        <h3>Savings goals</h3>
+        <p>Link savings entries to a goal and progress fills itself — including an ETA based on your
+          actual contribution pace.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Honest analytics</h3>
+        <p>Six-month income vs. expense trends bucketed by your real transaction dates, plus category
+          distribution and your ten largest expenses.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">💡</div>
+        <h3>Insights, not platitudes</h3>
+        <p>Savings rate, month-over-month change, runway in months, budget breaches — generated from
+          your ledger, and rewritten when your numbers change.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">💱</div>
+        <h3>Eight currencies</h3>
+        <p>USD, EUR, GBP, NGN, INR, KES, CAD and ZAR, converted with live rates and cached for 24 hours
+          so it still works offline.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🙈</div>
+        <h3>Privacy mode</h3>
+        <p>One toggle masks every amount across the app — cards, tables and charts — for when you're
+          working somewhere public.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📥</div>
+        <h3>Your data, portable</h3>
+        <p>Export transactions to CSV or take a full JSON backup and restore it later. Nothing is
+          locked in.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🌗</div>
+        <h3>Light &amp; dark</h3>
+        <p>A proper dark theme, keyboard shortcuts, undo on every delete, and a layout that works
+          down to a phone.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🧪</div>
+        <h3>Actually tested</h3>
+        <p>The money maths and the rendered app are covered by 102 automated tests. Run
+          <code>npm test</code> and see for yourself.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- Stats Section -->
-<section id="stats" class="stats">
-  <div class="container stats-container">
-    <div class="stat-item">
-      <h3>$2M+</h3>
-      <p>Transactions Tracked</p>
-    </div>
-    <div class="stat-item">
-      <h3>99.9%</h3>
-      <p>System Uptime</p>
-    </div>
-    <div class="stat-item">
-      <h3>50k+</h3>
-      <p>Active Users</p>
-    </div>
-    <div class="stat-item">
-      <h3>4.9★</h3>
-      <p>App Store Rating</p>
-    </div>
-  </div>
-</section>
-
-<!-- Pricing Section -->
-<section id="pricing" class="pricing">
+<!-- HOW IT WORKS -->
+<section id="how" class="how">
   <div class="container">
-    <div class="pricing-header">
-      <h2>Simple, Transparent Pricing</h2>
-      <p>Choose the plan that best fits your financial journey. No hidden fees.</p>
+    <div class="features-header">
+      <h2>Up and running in under a minute</h2>
+      <p>No installation, no build step, no dependencies to manage.</p>
     </div>
-
-    <div class="pricing-grid">
-      <!-- Starter Plan -->
-      <div class="pricing-card">
-        <h3>Starter</h3>
-        <p class="plan-desc">Perfect for personal finance tracking</p>
-        <div class="price">$0<span>/month</span></div>
-        <ul class="features-list">
-          <li>✓ Basic expense tracking</li>
-          <li>✓ Up to 2 connected accounts</li>
-          <li>✓ Monthly budget reports</li>
-          <li>✓ Standard support</li>
-        </ul>
-        <a href="signup.html" class="btn btn-pill-outline">Get Started</a>
+    <div class="steps-grid">
+      <div class="step-card">
+        <span class="step-number">1</span>
+        <h3>Open the app</h3>
+        <p>Double-click <code>app.html</code>, or serve the folder. That's the whole deployment.</p>
       </div>
-
-      <!-- Pro Plan (Featured) -->
-      <div class="pricing-card featured">
-        <div class="badge">Most Popular</div>
-        <h3>Pro</h3>
-        <p class="plan-desc">For serious savers and investors</p>
-        <div class="price">$12<span>/month</span></div>
-        <ul class="features-list">
-          <li>✓ Unlimited account connections</li>
-          <li>✓ Real-time automated tagging</li>
-          <li>✓ Advanced custom budgets</li>
-          <li>✓ Investment & crypto tracking</li>
-          <li>✓ Priority 24/7 support</li>
-        </ul>
-        <a href="signup.html" class="btn btn-pill-primary">Start 14-Day Free Trial</a>
+      <div class="step-card">
+        <span class="step-number">2</span>
+        <h3>Load the demo</h3>
+        <p>One click generates six months of realistic activity across every category, budget and goal.</p>
       </div>
-
-      <!-- Enterprise Plan -->
-      <div class="pricing-card">
-        <h3>Business</h3>
-        <p class="plan-desc">For teams and business owners</p>
-        <div class="price">$29<span>/month</span></div>
-        <ul class="features-list">
-          <li>✓ Everything in Pro</li>
-          <li>✓ Multi-user collaboration</li>
-          <li>✓ Custom export & API access</li>
-          <li>✓ Dedicated account manager</li>
-        </ul>
-        <a href="#" class="btn btn-pill-outline">Contact Sales</a>
+      <div class="step-card">
+        <span class="step-number">3</span>
+        <h3>Make it yours</h3>
+        <p>Clear the demo, log your own transactions, and set the budgets and goals that matter to you.</p>
       </div>
     </div>
   </div>
 </section>
 
+<!-- PRIVACY -->
+<section id="privacy" class="privacy-section">
+  <div class="container privacy-inner">
+    <div>
+      <h2>Your finances never leave your device</h2>
+      <p>SpendWise stores everything in <code>localStorage</code> on the machine you're using. There
+        is no database, no analytics, no tracking and no account sync.</p>
+      <ul class="privacy-list">
+        <li><strong>One network call.</strong> Live exchange rates from open.er-api.com, cached for 24 hours. Block it and the app still works at 1:1.</li>
+        <li><strong>No passwords stored.</strong> Sign-in is a local profile so the app can greet you. Nothing is hashed, stored or transmitted.</li>
+        <li><strong>Clear it any time.</strong> Settings → Clear all data, or clear your browser storage. There is nothing else to delete.</li>
+      </ul>
+    </div>
+    <div class="privacy-visual">
+      <div class="privacy-chip">🔒 localStorage only</div>
+      <div class="privacy-chip">🚫 No servers</div>
+      <div class="privacy-chip">🚫 No tracking</div>
+      <div class="privacy-chip">📤 Export any time</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
 <section class="cta-banner">
   <div class="container">
     <div class="cta-card">
-      <h2>Ready to Take Control of Your Finances?</h2>
-      <p>Join over 50,000 users managing their spending and savings with SpendWise.</p>
+      <h2>Ready to take control of your finances?</h2>
+      <p>Free, open source, and private by design. Try the demo above, or jump straight in.</p>
       <div class="cta-buttons">
-        <a href="signup.html" class="btn btn-pill-light">Get Started Free</a>
-        <a href="#" class="btn btn-pill-outline-light">Talk to Sales</a>
+        <a href="app.html" class="btn btn-pill-light">Open SpendWise</a>
+        <a href="signup.html" class="btn btn-pill-outline-light">Create a profile</a>
       </div>
     </div>
   </div>
@@ -200,41 +222,40 @@
 <footer class="footer">
   <div class="container footer-container">
     <div class="footer-brand">
-      <a href="#" class="logo">Spend<span>Wise</span></a>
-      <p>Take control of your spending with smarter budgets, real-time insights, and confidence in every financial decision.</p>
+      <a href="index.html" class="logo">Spend<span>Wise</span></a>
+      <p>A local-first personal finance tracker. Smarter budgets, honest insights, and confidence in
+        every decision — with your data staying yours.</p>
     </div>
 
     <div class="footer-col">
-      <h4>Platform</h4>
+      <h4>Product</h4>
       <ul>
-        <li><a href="#demo">Live Demo</a></li>
+        <li><a href="#demo">Live demo</a></li>
         <li><a href="#features">Features</a></li>
-        <li><a href="#stats">Stats</a></li>
-        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="app.html">Open the app</a></li>
       </ul>
     </div>
 
     <div class="footer-col">
-      <h4>Company</h4>
+      <h4>Account</h4>
       <ul>
-        <li><a href="#">About</a></li>
-        <li><a href="#">Careers</a></li>
-        <li><a href="#">Security</a></li>
+        <li><a href="login.html">Log in</a></li>
+        <li><a href="signup.html">Sign up</a></li>
       </ul>
     </div>
 
     <div class="footer-col">
-      <h4>Resources</h4>
+      <h4>Project</h4>
       <ul>
-        <li><a href="#">Help Center</a></li>
-        <li><a href="#">Guides</a></li>
-        <li><a href="#">Contact</a></li>
+        <li><a href="#privacy">Privacy</a></li>
+        <li><a href="README.md">Documentation</a></li>
       </ul>
     </div>
   </div>
 
   <div class="container footer-bottom">
-    <p>© 2026 SpendWise. All rights reserved.</p>
+    <p>© 2026 SpendWise. Free and open source under the MIT licence.</p>
   </div>
 </footer>
 

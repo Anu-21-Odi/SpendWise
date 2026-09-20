@@ -1,141 +1,90 @@
-<!-- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - SpendWise</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        /* Auth-specific page centering layout */
-        .auth-container {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            padding: 2rem 1rem;
-            background-color: var(--bg-alt, #f8fafc);
-        }
-        .auth-card {
-            width: 100%;
-            max-width: 420px;
-            background: var(--bg-card, #ffffff);
-            border: 1px solid var(--border-color, #e2e8f0);
-            border-radius: 16px;
-            padding: 2.5rem 2rem;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-            margin: auto;
-        }
-        .auth-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .auth-header h1 {
-            font-size: 1.75rem;
-            margin-bottom: 0.5rem;
-            color: var(--text-dark, #111827);
-        }
-        .auth-header p {
-            color: var(--text-muted, #6b7280);
-            font-size: 0.9rem;
-        }
-        .form-group {
-            margin-bottom: 1.25rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-        }
-        .form-group label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-dark, #111827);
-        }
-        .form-control {
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--border-color, #cbd5e1);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            outline: none;
-            transition: border-color 0.2s ease;
-            background-color: var(--input-bg, #ffffff);
-            color: var(--text-dark, #111827);
-            width: 100%;
-        }
-        .form-control:focus {
-            border-color: var(--primary, #4f46e5);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
-        }
-        .auth-footer-text {
-            text-align: center;
-            margin-top: 1.5rem;
-            font-size: 0.875rem;
-            color: var(--text-muted, #6b7280);
-        }
-        .auth-footer-text a {
-            color: var(--primary, #4f46e5);
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .auth-footer-text a:hover {
-            text-decoration: underline;
-        }
-        .back-home {
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-        .back-home a {
-            text-decoration: none;
-            color: var(--text-muted, #6b7280);
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        .back-home a:hover {
-            color: var(--text-dark, #111827);
-        }
-    </style>
-</head>
-<body>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Create a SpendWise profile and start tracking spending, budgets and savings goals.">
+  <meta name="color-scheme" content="light">
+  <title>Create account — SpendWise</title>
 
-<div class="auth-container">
-    <div class="back-home" style="width: 100%; max-width: 420px; text-align: left;">
-        <a href="index.html">← Back to Home</a>
-    </div>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="auth.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
+</head>
+<body class="auth-body">
+
+  <div class="auth-container">
+    <a href="index.html" class="auth-back">← Back to home</a>
 
     <div class="auth-card">
-        <div class="auth-header">
-            <a href="index.html" class="logo" style="font-size: 1.5rem; text-decoration: none; font-weight: 700; color: #111827; display: inline-block; margin-bottom: 1rem;">Spend<span style="color: #4f46e5;">Wise</span></a>
-            <h1>Create an Account</h1>
-            <p>Start mastering your personal finances today.</p>
+      <div class="auth-header">
+        <a href="index.html" class="auth-logo">
+          <span class="mark">💸</span> Spend<span>Wise</span>
+        </a>
+        <h1>Create your profile</h1>
+        <p>Set up in seconds. No card, no server, no sync.</p>
+      </div>
+
+      <div class="auth-note">
+        <span>🔒</span>
+        <span><strong>Demo sign-up.</strong> There is no backend to register with. Your password is
+          validated for length and then thrown away — it is never stored or transmitted. Your name
+          and email stay in this browser only.</span>
+      </div>
+
+      <form id="signupForm" class="auth-form" novalidate>
+        <div class="form-group">
+          <label for="fullname">Full name</label>
+          <input type="text" id="fullname" placeholder="Ada Lovelace" autocomplete="name">
+          <span class="field-error" id="err-fullname"></span>
         </div>
 
-        <form id="signupForm" onsubmit="event.preventDefault(); alert('Account creation demo successful!');">
-            <div class="form-group">
-                <label for="fullname">Full Name</label>
-                <input type="text" id="fullname" class="form-control" placeholder="John Doe" required>
-            </div>
-
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" class="form-control" placeholder="name@example.com" required>
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="At least 8 characters" required>
-            </div>
-
-            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; margin-top: 0.5rem; font-size: 1rem; border-radius: 8px;">Create Account</button>
-        </form>
-
-        <div class="auth-footer-text">
-            Already have an account? <a href="login.html">Log in</a>
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input type="email" id="email" placeholder="name@example.com" autocomplete="email">
+          <span class="field-error" id="err-email"></span>
         </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="At least 8 characters" autocomplete="new-password">
+          <span class="field-error" id="err-password"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirm password</label>
+          <input type="password" id="confirmPassword" placeholder="Repeat it" autocomplete="new-password">
+          <span class="field-error" id="err-confirmPassword"></span>
+        </div>
+
+        <label class="form-checkbox">
+          <input type="checkbox" checked disabled>
+          <span>I understand my data stays in this browser and is never uploaded.</span>
+        </label>
+
+        <button type="submit" class="btn-full">Create account</button>
+      </form>
+
+      <div class="auth-footer">
+        Already have an account? <a href="login.html">Log in</a>
+      </div>
     </div>
 
-    <footer style="font-size: 0.8rem; color: var(--text-muted, #6b7280); text-align: center; padding: 1rem;">
-        © 2026 SpendWise. All rights reserved.
-    </footer>
-</div>
+    <div class="auth-perks">
+      <div>✅ &nbsp;Budgets with overspend warnings</div>
+      <div>✅ &nbsp;Savings goals with automatic progress</div>
+      <div>✅ &nbsp;Six-month trends from your real dates</div>
+      <div>✅ &nbsp;CSV and JSON export, any time</div>
+    </div>
 
+    <div class="auth-legal">
+      © 2026 SpendWise · <a href="index.html">Home</a> · <a href="app.html">Open the app directly</a>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/auth-pages.js"></script>
 </body>
-</html> -->
+</html>

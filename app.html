@@ -3,46 +3,74 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SpendWise - Personal Finance Tracker</title>
+  <meta name="description" content="SpendWise — a private, local-first personal finance tracker with budgets, savings goals and real insights.">
+  <meta name="color-scheme" content="light dark">
+  <title>SpendWise — Personal Finance Tracker</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="dashboard.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💸</text></svg>">
 </head>
 <body>
 
-  <!-- Backdrop overlay for mobile drawer -->
+  <!-- Mobile drawer backdrop -->
   <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
 
   <div class="app-layout">
-    <!-- Sidebar Navigation Drawer -->
+
+    <!-- ======================= SIDEBAR ======================= -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <h2 class="brand-logo">Spend<span>Wise</span></h2>
+        <a href="index.html" class="brand-logo">
+          <span class="brand-mark">💸</span>
+          Spend<span>Wise</span>
+        </a>
         <button id="closeSidebarBtn" class="icon-btn close-sidebar-btn" aria-label="Close navigation">&times;</button>
       </div>
-      <nav class="sidebar-nav">
-        <a href="#" class="nav-link active" data-target="dashboardSection">
+
+      <nav class="sidebar-nav" aria-label="Primary">
+        <a href="#" class="nav-link active" data-target="dashboardSection" data-title="Dashboard">
           <span class="nav-icon">🏠</span> Dashboard
         </a>
-        <a href="#" class="nav-link" data-target="transactionsSection">
+        <a href="#" class="nav-link" data-target="transactionsSection" data-title="Transactions">
           <span class="nav-icon">💳</span> Transactions
         </a>
-        <a href="#" class="nav-link" data-target="analyticsSection">
+        <a href="#" class="nav-link" data-target="budgetsSection" data-title="Budgets">
+          <span class="nav-icon">🎯</span> Budgets
+          <span class="nav-badge" id="budgetAlertBadge" hidden>0</span>
+        </a>
+        <a href="#" class="nav-link" data-target="goalsSection" data-title="Savings Goals">
+          <span class="nav-icon">🏦</span> Goals
+        </a>
+        <a href="#" class="nav-link" data-target="analyticsSection" data-title="Analytics">
           <span class="nav-icon">📊</span> Analytics
         </a>
-        <a href="#" class="nav-link" data-target="settingsSection">
+
+        <span class="nav-section-label">System</span>
+        <a href="#" class="nav-link" data-target="settingsSection" data-title="Settings">
           <span class="nav-icon">⚙️</span> Settings
         </a>
       </nav>
+
+      <div class="sidebar-footer">
+        <button type="button" class="user-chip" id="userChip">
+          <span class="avatar" id="userAvatar">?</span>
+          <span class="user-chip-meta">
+            <span class="user-chip-name" id="userName">Guest</span>
+            <span class="user-chip-sub" id="userMeta">Local session</span>
+          </span>
+        </button>
+      </div>
     </aside>
 
-    <!-- Main Dashboard Body -->
+    <!-- ======================= MAIN ======================= -->
     <main class="main-content">
-      <!-- Top Header -->
+
       <header class="dashboard-header">
         <div class="header-title-container">
-          <!-- Mobile Hamburger Toggle -->
-          <button id="menuToggleBtn" class="icon-btn menu-toggle-btn" aria-label="Open navigation">
-            ☰
-          </button>
+          <button id="menuToggleBtn" class="icon-btn menu-toggle-btn" aria-label="Open navigation">☰</button>
           <div>
             <h1 id="pageTitle">Dashboard</h1>
             <p class="subtitle" id="pageSubtitle">Welcome back! Here is your financial summary.</p>
@@ -50,105 +78,169 @@
         </div>
 
         <div class="header-actions">
-          <!-- Currency Selector Dropdown -->
-          <select id="currencySelect" class="currency-dropdown">
-            <option value="$">USD ($)</option>
-            <option value="€">EUR (€)</option>
-            <option value="£">GBP (£)</option>
-            <option value="₦">NGN (₦)</option>
-            <option value="₹">INR (₹)</option>
+          <label class="sr-only" for="currencySelect">Display currency</label>
+          <select id="currencySelect" class="currency-dropdown" title="Display currency">
+            <!-- Populated from js/finance.js CURRENCIES -->
           </select>
-          <button id="openModalBtn" class="btn btn-primary">+ Add Transaction</button>
+          <button id="privacyQuickBtn" class="icon-btn" title="Toggle privacy mode" aria-label="Toggle privacy mode">🙈</button>
+          <button id="themeQuickBtn" class="icon-btn" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+          <button id="openModalBtn" class="btn btn-primary">＋ Add Transaction</button>
         </div>
       </header>
 
-      <!-- SECTION 1: DASHBOARD VIEW -->
+      <!-- ==================== SECTION: DASHBOARD ==================== -->
       <div id="dashboardSection" class="content-section active">
-        <!-- Summary Metrics Grid (Updated with Savings) -->
-        <section class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-          <div class="metric-card">
-            <span class="metric-label">Total Balance</span>
-            <h3 id="totalBalance">$0.00</h3>
+
+        <!-- Onboarding, shown only when the ledger is empty -->
+        <div id="onboardingBanner" class="onboarding" hidden>
+          <div>
+            <h3>Let's get your money in focus ✨</h3>
+            <p>You have no transactions yet. Add one by hand, or load a realistic six-month demo
+              dataset so every chart, budget and insight has something real to show.</p>
           </div>
-          <div class="metric-card">
-            <span class="metric-label">Total Income</span>
-            <h3 id="totalIncome" class="text-success">+$0.00</h3>
+          <div class="onboarding-actions">
+            <button type="button" id="loadDemoBtn" class="btn btn-primary">Load demo data</button>
+            <button type="button" id="onboardingAddBtn" class="btn btn-secondary">Add manually</button>
           </div>
-          <div class="metric-card">
-            <span class="metric-label">Total Expenses</span>
-            <h3 id="totalExpenses" class="text-danger">-$0.00</h3>
+        </div>
+
+        <section class="metrics-grid">
+          <div class="metric-card" style="--metric-accent: linear-gradient(90deg,#6366f1,#d946ef); --metric-soft: rgba(99,102,241,.14);">
+            <div class="metric-top">
+              <span class="metric-label">Total Balance</span>
+              <span class="metric-icon">💰</span>
+            </div>
+            <h3 id="totalBalance" class="privacy-mask">$0.00</h3>
+            <div class="metric-foot">
+              <span class="delta delta-flat" id="balanceDelta">—</span>
+              <span>net cash flow</span>
+            </div>
           </div>
-          <div class="metric-card">
-            <span class="metric-label">Total Savings</span>
-            <h3 id="totalSavings" style="color: #8b5cf6;">+$0.00</h3>
+
+          <div class="metric-card" style="--metric-accent: linear-gradient(90deg,#10b981,#34d399); --metric-soft: rgba(16,185,129,.14);">
+            <div class="metric-top">
+              <span class="metric-label">Total Income</span>
+              <span class="metric-icon">📈</span>
+            </div>
+            <h3 id="totalIncome" class="text-success privacy-mask">+$0.00</h3>
+            <div class="metric-foot"><span id="incomeCount">0 entries</span></div>
+          </div>
+
+          <div class="metric-card" style="--metric-accent: linear-gradient(90deg,#ef4444,#f97316); --metric-soft: rgba(239,68,68,.14);">
+            <div class="metric-top">
+              <span class="metric-label">Total Expenses</span>
+              <span class="metric-icon">📉</span>
+            </div>
+            <h3 id="totalExpenses" class="text-danger privacy-mask">-$0.00</h3>
+            <div class="metric-foot">
+              <span class="delta delta-flat" id="expenseDelta">—</span>
+              <span>vs last month</span>
+            </div>
+          </div>
+
+          <div class="metric-card" style="--metric-accent: linear-gradient(90deg,#8b5cf6,#a855f7); --metric-soft: rgba(139,92,246,.14);">
+            <div class="metric-top">
+              <span class="metric-label">Savings</span>
+              <span class="metric-icon">🏦</span>
+            </div>
+            <h3 id="totalSavings" style="color: var(--accent);" class="privacy-mask">+$0.00</h3>
+            <div class="metric-foot"><span id="savingsRateLabel">0% savings rate</span></div>
           </div>
         </section>
 
-        <!-- Dashboard Layout Grid: Visual Chart + Recent Preview -->
         <div class="dashboard-grid">
-          <!-- Expense Breakdown Visual Card -->
           <section class="card">
             <div class="card-header">
-              <h2>Expense Breakdown</h2>
+              <div>
+                <h2>Expense Breakdown</h2>
+                <p class="subtitle">Where your money actually goes.</p>
+              </div>
             </div>
-            <div class="chart-container" style="position: relative; height: 260px; width: 100%;">
-              <canvas id="expenseChart"></canvas>
+            <div class="chart-container">
+              <canvas id="expenseChart" role="img" aria-label="Expense distribution by category"></canvas>
+              <div class="donut-center">
+                <span class="dc-label">Spent</span>
+                <span class="dc-value privacy-mask" id="donutCenter">$0</span>
+              </div>
             </div>
           </section>
 
-          <!-- Quick Recent Activity Preview -->
           <section class="card">
-            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-              <h2>Recent Activity</h2>
-              <a href="#" id="viewAllTxBtn" style="color: var(--primary); font-size: 0.875rem; text-decoration: none; font-weight: 500;">
-                View All →
-              </a>
+            <div class="card-header">
+              <div>
+                <h2>Recent Activity</h2>
+                <p class="subtitle">Your latest movements.</p>
+              </div>
+              <a href="#" id="viewAllTxBtn" class="btn btn-ghost btn-sm">View all →</a>
             </div>
             <div class="table-container">
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th>Description</th>
-                    <th>Category</th>
-                    <th class="text-right">Amount</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Category</th>
+                    <th scope="col" class="text-right">Amount</th>
                   </tr>
                 </thead>
-                <tbody id="dashboardRecentList">
-                  <!-- Latest transactions dynamic rows -->
-                </tbody>
+                <tbody id="dashboardRecentList"></tbody>
               </table>
             </div>
           </section>
         </div>
+
+        <div class="dashboard-grid three" style="margin-top: 1.25rem;">
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h2>Budget Pulse</h2>
+                <p class="subtitle">This month, at a glance.</p>
+              </div>
+            </div>
+            <div id="dashboardBudgets" class="stack-col"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h2>Goal Progress</h2>
+                <p class="subtitle">What you're saving towards.</p>
+              </div>
+            </div>
+            <div id="dashboardGoals" class="stack-col"></div>
+          </section>
+
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h2>Smart Insights</h2>
+                <p class="subtitle">Generated from your real numbers.</p>
+              </div>
+            </div>
+            <div id="dashboardInsights" class="stack-col"></div>
+          </section>
+        </div>
       </div>
 
-      <!-- SECTION 2: TRANSACTIONS VIEW -->
+      <!-- ==================== SECTION: TRANSACTIONS ==================== -->
       <div id="transactionsSection" class="content-section">
         <section class="card">
-          <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
-            <h2>All Transactions</h2>
-            
-            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-              <input 
-                type="text" 
-                id="searchInput" 
-                placeholder="Search description..." 
-                class="form-control"
-                style="padding: 0.4rem 0.75rem; font-size: 0.85rem;"
-              />
-
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <label for="categoryFilter" style="font-size: 0.875rem; color: var(--text-muted); font-weight: 500;">Filter:</label>
-                <select id="categoryFilter" class="currency-dropdown" style="padding: 0.4rem 0.6rem; font-size: 0.85rem;">
-                  <option value="All">All Categories</option>
-                  <option value="Food & Dining">Food & Dining</option>
-                  <option value="Salary">Salary</option>
-                  <option value="Utilities">Utilities</option>
-                  <option value="Entertainment">Entertainment</option>
-                  <option value="Shopping">Shopping</option>
-                  <option value="Savings Fund">Savings Fund</option>
-                </select>
-              </div>
+          <div class="card-header">
+            <div>
+              <h2>All Transactions</h2>
+              <p class="subtitle" id="txResultCount">0 transactions</p>
+            </div>
+            <div class="setting-actions">
+              <input type="search" id="searchInput" class="form-control" placeholder="🔍  Search…" aria-label="Search transactions" style="min-width: 170px;">
+              <select id="typeFilter" class="currency-dropdown" aria-label="Filter by type">
+                <option value="All">All types</option>
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+                <option value="savings">Savings</option>
+              </select>
+              <select id="categoryFilter" class="currency-dropdown" aria-label="Filter by category">
+                <option value="All">All categories</option>
+              </select>
+              <select id="rangeFilter" class="currency-dropdown" aria-label="Filter by date range"></select>
             </div>
           </div>
 
@@ -156,206 +248,381 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Description</th>
-                  <th>Category</th>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th class="text-right">Action</th>
+                  <th scope="col">Description</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Date</th>
+                  <th scope="col" class="text-right">Amount</th>
+                  <th scope="col" class="text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody id="transactionList">
-                <!-- Dynamic rows -->
-              </tbody>
+              <tbody id="transactionList"></tbody>
             </table>
           </div>
         </section>
       </div>
 
-      <!-- SECTION 3: ANALYTICS VIEW -->
-      <div id="analyticsSection" class="content-section">
-        <div class="page-header" style="margin-bottom: 1.5rem;">
-          <h1>Financial Analytics</h1>
-          <p class="subtitle">Deep dive into your spending trends, category distribution, and savings rate.</p>
-        </div>
-
-        <!-- Top Row: Income vs Expenses Trend Chart -->
-        <section class="card" style="margin-bottom: 1.5rem;">
-          <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-            <div>
-              <h3>Income vs Expenses Trend</h3>
-              <p class="subtitle">6-month historical cash flow performance.</p>
-            </div>
-            <div class="trend-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-              +28% Net Savings
-            </div>
-          </div>
-          <div style="position: relative; height: 260px; width: 100%;">
-            <canvas id="trendChart"></canvas>
-          </div>
-        </section>
-
-        <!-- Bottom Grid: Category Breakdown Progress & Smart Insights -->
-        <div class="dashboard-grid">
-          
-          <!-- Category Distribution Breakdown -->
+      <!-- ==================== SECTION: BUDGETS ==================== -->
+      <div id="budgetsSection" class="content-section">
+        <div class="section-stack">
           <section class="card">
-            <div class="card-header" style="margin-bottom: 1rem;">
-              <h3>Category Breakdown</h3>
-              <p class="subtitle">Total spending distributed by category.</p>
+            <div class="card-header">
+              <div>
+                <h2>Monthly Budget Overview</h2>
+                <p class="subtitle" id="budgetPeriodLabel">Current month</p>
+              </div>
+              <button type="button" id="openBudgetModalBtn" class="btn btn-primary">＋ Set a budget</button>
             </div>
-            <div id="analyticsCategoryList" style="display: flex; flex-direction: column; gap: 1rem;">
-              <!-- Dynamically populated via JS -->
-            </div>
+            <div id="budgetRollup" class="stack-col" style="gap: 0.5rem;"></div>
           </section>
 
-          <!-- Smart Insights Column -->
           <section class="card">
-            <div class="card-header" style="margin-bottom: 1rem;">
-              <h3>Smart Insights</h3>
-              <p class="subtitle">Automated feedback based on your logs.</p>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-              <div style="padding: 1rem; background: rgba(79, 70, 229, 0.05); border-left: 4px solid var(--primary, #4f46e5); border-radius: 6px;">
-                <h4 style="font-size: 0.95rem; margin-bottom: 0.25rem; color: var(--text-dark, #111827);">Top Expense Category</h4>
-                <p style="font-size: 0.875rem; color: var(--text-muted, #6b7280);">Food & Dining currently takes up the largest share of your monthly outgoing cash flow.</p>
-              </div>
-
-              <div style="padding: 1rem; background: rgba(16, 185, 129, 0.05); border-left: 4px solid #10b981; border-radius: 6px;">
-                <h4 style="font-size: 0.95rem; margin-bottom: 0.25rem; color: var(--text-dark, #111827);">Healthy Cash Flow</h4>
-                <p style="font-size: 0.875rem; color: var(--text-muted, #6b7280);">Your income comfortably covers your recurring bills with a strong surplus ratio.</p>
-              </div>
-
-              <div style="padding: 1rem; background: rgba(139, 92, 246, 0.05); border-left: 4px solid #8b5cf6; border-radius: 6px;">
-                <h4 style="font-size: 0.95rem; margin-bottom: 0.25rem; color: var(--text-dark, #111827);">Savings Growth</h4>
-                <p style="font-size: 0.875rem; color: var(--text-muted, #6b7280);">Regular contributions to your savings buffer are building your long-term security.</p>
+            <div class="card-header">
+              <div>
+                <h2>Category Budgets</h2>
+                <p class="subtitle">Limits vs. what you've actually spent this month.</p>
               </div>
             </div>
+            <div id="budgetList" class="stack-col"></div>
           </section>
-
         </div>
       </div>
 
-      <!-- SECTION 4: SETTINGS VIEW -->
+      <!-- ==================== SECTION: GOALS ==================== -->
+      <div id="goalsSection" class="content-section">
+        <div class="section-stack">
+          <div class="card-header" style="margin-bottom: 0;">
+            <div>
+              <h1 style="font-size: 1.5rem;">Savings Goals</h1>
+              <p class="subtitle">Progress is calculated from your linked savings transactions — nothing is entered twice.</p>
+            </div>
+            <button type="button" id="openGoalModalBtn" class="btn btn-primary">＋ New goal</button>
+          </div>
+          <div id="goalGrid" class="dashboard-grid three"></div>
+        </div>
+      </div>
+
+      <!-- ==================== SECTION: ANALYTICS ==================== -->
+      <div id="analyticsSection" class="content-section">
+        <div class="page-header">
+          <h1>Financial Analytics</h1>
+          <p class="subtitle">Trends, distribution and automated feedback — all computed from your ledger.</p>
+        </div>
+
+        <div class="section-stack">
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h3>Cash Flow Trend</h3>
+                <p class="subtitle">Real monthly totals from your transaction dates.</p>
+              </div>
+              <span class="badge badge-savings" id="trendBadge">—</span>
+            </div>
+            <div class="chart-container" style="height: 300px;">
+              <canvas id="trendChart" role="img" aria-label="Income versus expenses over the last six months"></canvas>
+            </div>
+          </section>
+
+          <div class="dashboard-grid">
+            <section class="card">
+              <div class="card-header">
+                <div>
+                  <h3>Category Breakdown</h3>
+                  <p class="subtitle">Total spend, distributed.</p>
+                </div>
+              </div>
+              <div id="analyticsCategoryList" class="stack-col"></div>
+            </section>
+
+            <section class="card">
+              <div class="card-header">
+                <div>
+                  <h3>Smart Insights</h3>
+                  <p class="subtitle">Automated feedback based on your logs.</p>
+                </div>
+              </div>
+              <div id="analyticsInsights" class="stack-col"></div>
+            </section>
+          </div>
+
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h3>Top Spending</h3>
+                <p class="subtitle">Your ten largest expenses.</p>
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Description</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Date</th>
+                    <th scope="col" class="text-right">Amount</th>
+                    <th scope="col" class="text-right">Share of spend</th>
+                  </tr>
+                </thead>
+                <tbody id="topSpendingList"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- ==================== SECTION: SETTINGS ==================== -->
       <div id="settingsSection" class="content-section">
-        <!-- 1. General Preferences -->
-        <section class="card" style="margin-bottom: 1.5rem;">
-          <h2>General Preferences</h2>
-          
-          <div class="setting-item" style="margin-top: 1rem;">
-            <div>
-              <h3>Appearance Theme</h3>
-              <p class="subtitle">Choose between light and dark color modes.</p>
-            </div>
-            <select id="themeSelect" class="currency-dropdown">
-              <option value="light">☀️ Light Mode</option>
-              <option value="dark">🌙 Dark Mode</option>
-            </select>
-          </div>
+        <div class="section-stack">
 
-          <div class="setting-item" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-            <div>
-              <h3>Privacy Mode</h3>
-              <p class="subtitle">Mask financial amounts on dashboard summary cards.</p>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="privacyToggle">
-              <span class="slider"></span>
-            </label>
-          </div>
-        </section>
+          <section class="card">
+            <h2>Preferences</h2>
 
-        <!-- 2. Data Backup & Export -->
-        <section class="card" style="margin-bottom: 1.5rem;">
-          <h2>Data Management</h2>
-
-          <div class="setting-item" style="margin-top: 1rem;">
-            <div>
-              <h3>Export Transactions (CSV)</h3>
-              <p class="subtitle">Download transaction history as a spreadsheet-compatible file.</p>
+            <div class="setting-item">
+              <div>
+                <h3>Appearance</h3>
+                <p class="subtitle">Switch between light and dark mode.</p>
+              </div>
+              <select id="themeSelect" class="currency-dropdown" aria-label="Theme">
+                <option value="light">☀️  Light mode</option>
+                <option value="dark">🌙  Dark mode</option>
+              </select>
             </div>
-            <button id="exportCsvBtn" class="btn btn-secondary">📥 Export CSV</button>
-          </div>
 
-          <div class="setting-item" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-            <div>
-              <h3>Backup / Restore Data</h3>
-              <p class="subtitle">Export complete JSON backup or restore from an existing file.</p>
+            <div class="setting-item">
+              <div>
+                <h3>Privacy mode</h3>
+                <p class="subtitle">Masks every amount across the app, not just the summary cards.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="privacyToggle">
+                <span class="slider"></span>
+              </label>
             </div>
-            <div style="display: flex; gap: 0.5rem;">
-              <button id="exportJsonBtn" class="btn btn-secondary">💾 Save Backup</button>
-              <input type="file" id="importJsonInput" accept=".json" style="display: none;">
-              <button id="importJsonBtn" class="btn btn-secondary" onclick="document.getElementById('importJsonInput').click()">📤 Restore</button>
-            </div>
-          </div>
-        </section>
 
-        <!-- 3. Danger Zone -->
-        <section class="card">
-          <h2 style="color: var(--danger-color);">Danger Zone</h2>
-
-          <div class="setting-item" style="margin-top: 1rem;">
-            <div>
-              <h3>Reset Dashboard</h3>
-              <p class="subtitle">Permanently clear all saved transactions and preferences.</p>
+            <div class="setting-item">
+              <div>
+                <h3>Default currency</h3>
+                <p class="subtitle">Used for display and when converting new entries.</p>
+              </div>
+              <select id="defaultCurrencySelect" class="currency-dropdown" aria-label="Default currency"></select>
             </div>
-            <button id="clearDataBtn" class="btn" style="background-color: var(--danger-color); color: #fff;">Clear All Data</button>
-          </div>
-        </section>
+          </section>
+
+          <section class="card">
+            <h2>Data</h2>
+
+            <div class="setting-item">
+              <div>
+                <h3>Demo dataset</h3>
+                <p class="subtitle">Six months of realistic activity to explore every feature.</p>
+              </div>
+              <button type="button" id="loadDemoSettingsBtn" class="btn btn-secondary">🎲  Load demo data</button>
+            </div>
+
+            <div class="setting-item">
+              <div>
+                <h3>Export transactions (CSV)</h3>
+                <p class="subtitle">Spreadsheet-ready, one row per transaction.</p>
+              </div>
+              <button type="button" id="exportCsvBtn" class="btn btn-secondary">📥  Export CSV</button>
+            </div>
+
+            <div class="setting-item">
+              <div>
+                <h3>Backup / restore</h3>
+                <p class="subtitle">Full JSON snapshot: transactions, budgets, goals and preferences.</p>
+              </div>
+              <div class="setting-actions">
+                <button type="button" id="exportJsonBtn" class="btn btn-secondary">💾  Save backup</button>
+                <input type="file" id="importJsonInput" accept=".json,application/json" class="sr-only">
+                <button type="button" id="importJsonBtn" class="btn btn-secondary">📤  Restore</button>
+              </div>
+            </div>
+
+            <div class="setting-item">
+              <div>
+                <h3>Storage used</h3>
+                <p class="subtitle" id="storageStats">Calculating…</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2 style="color: var(--danger-color);">Danger zone</h2>
+            <div class="setting-item">
+              <div>
+                <h3>Reset SpendWise</h3>
+                <p class="subtitle">Permanently clears transactions, budgets, goals and preferences.</p>
+              </div>
+              <button type="button" id="clearDataBtn" class="btn btn-danger">Clear all data</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>About</h2>
+            <p class="subtitle" style="max-width: 70ch;">
+              SpendWise runs entirely in your browser. Nothing is uploaded, there is no server and no
+              account sync — every figure on screen comes from <code>localStorage</code> on this device.
+              Exchange rates are the one network call, fetched from open.er-api.com and cached locally.
+            </p>
+          </section>
+        </div>
       </div>
     </main>
   </div>
 
-  <!-- Add / Edit Transaction Modal -->
-  <div id="transactionModal" class="modal-overlay">
+  <!-- ==================== MODAL: TRANSACTION ==================== -->
+  <div id="transactionModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-box">
       <div class="modal-header">
-        <h3 id="modalTitle">Add New Transaction</h3>
-        <button type="button" id="closeModalBtn" class="close-btn">&times;</button>
+        <h3 id="modalTitle">Add Transaction</h3>
+        <button type="button" id="closeModalBtn" class="close-btn" aria-label="Close">&times;</button>
       </div>
-      <form id="transactionForm">
+
+      <form id="transactionForm" novalidate>
         <div class="modal-body">
           <div class="form-group">
+            <span class="label" style="font-size:.82rem;font-weight:600;color:var(--text-muted);">Type</span>
+            <div class="type-picker">
+              <input type="radio" name="txType" id="typeExpense" value="expense" checked>
+              <label for="typeExpense" style="--pick-color: var(--danger-color); --pick-bg: var(--danger-soft);">
+                <span>📉</span> Expense
+              </label>
+              <input type="radio" name="txType" id="typeIncome" value="income">
+              <label for="typeIncome" style="--pick-color: var(--success-color); --pick-bg: var(--success-soft);">
+                <span>📈</span> Income
+              </label>
+              <input type="radio" name="txType" id="typeSavings" value="savings">
+              <label for="typeSavings" style="--pick-color: var(--accent); --pick-bg: var(--primary-soft);">
+                <span>🏦</span> Savings
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
             <label for="txDescription">Description</label>
-            <input type="text" id="txDescription" class="form-control" placeholder="e.g. Salary, Emergency Fund, Coffee" required>
+            <input type="text" id="txDescription" class="form-control" placeholder="e.g. Monthly salary, Groceries" autocomplete="off">
+            <span class="field-error" id="err-txDescription"></span>
           </div>
-          <div class="form-group">
-            <label for="txAmount">Amount</label>
-            <input type="number" step="0.01" id="txAmount" class="form-control" placeholder="0.00" required>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="txAmount">Amount (<span id="txAmountCurrency">$</span>)</label>
+              <input type="number" step="0.01" min="0" id="txAmount" class="form-control" placeholder="0.00">
+              <span class="field-error" id="err-txAmount"></span>
+            </div>
+            <div class="form-group">
+              <label for="txDate">Date</label>
+              <input type="date" id="txDate" class="form-control">
+              <span class="field-error" id="err-txDate"></span>
+            </div>
           </div>
-          <div class="form-group">
-            <label for="txType">Type</label>
-            <select id="txType" class="form-control" required>
-              <option value="expense">Expense</option>
-              <option value="income">Income</option>
-              <option value="savings">Savings</option>
-            </select>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="txCategory">Category</label>
+              <select id="txCategory" class="form-control"></select>
+              <span class="field-error" id="err-txCategory"></span>
+            </div>
+            <div class="form-group">
+              <label for="txGoal">Savings goal <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+              <select id="txGoal" class="form-control"></select>
+            </div>
           </div>
+
           <div class="form-group">
-            <label for="txCategory">Category</label>
-            <select id="txCategory" class="form-control" required>
-              <option value="Food & Dining">Food & Dining</option>
-              <option value="Salary">Salary</option>
-              <option value="Utilities">Utilities</option>
-              <option value="Entertainment">Entertainment</option>
-              <option value="Shopping">Shopping</option>
-              <option value="Savings Fund">Savings Fund</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="txDate">Date</label>
-            <input type="date" id="txDate" class="form-control">
+            <label for="txNotes">Notes <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+            <input type="text" id="txNotes" class="form-control" placeholder="Anything worth remembering" autocomplete="off">
           </div>
         </div>
+
         <div class="modal-footer">
           <button type="button" id="cancelBtn" class="btn btn-secondary">Cancel</button>
-          <button type="submit" id="submitModalBtn" class="btn btn-primary">Add Transaction</button>
+          <button type="submit" id="submitModalBtn" class="btn btn-primary">Add transaction</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Script Imports -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- ==================== MODAL: BUDGET ==================== -->
+  <div id="budgetModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="budgetModalTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="budgetModalTitle">Set a budget</h3>
+        <button type="button" class="close-btn" data-close-modal="budgetModal" aria-label="Close">&times;</button>
+      </div>
+      <form id="budgetForm" novalidate>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="budgetCategory">Category</label>
+            <select id="budgetCategory" class="form-control"></select>
+          </div>
+          <div class="form-group">
+            <label for="budgetLimit">Monthly limit (<span id="budgetLimitCurrency">$</span>)</label>
+            <input type="number" step="1" min="0" id="budgetLimit" class="form-control" placeholder="400">
+            <span class="field-error" id="err-budgetLimit"></span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="budgetModal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save budget</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: GOAL ==================== -->
+  <div id="goalModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="goalModalTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="goalModalTitle">New savings goal</h3>
+        <button type="button" class="close-btn" data-close-modal="goalModal" aria-label="Close">&times;</button>
+      </div>
+      <form id="goalForm" novalidate>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="goalName">Goal name</label>
+            <input type="text" id="goalName" class="form-control" placeholder="e.g. Emergency fund" autocomplete="off">
+            <span class="field-error" id="err-goalName"></span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="goalTarget">Target amount (<span id="goalTargetCurrency">$</span>)</label>
+              <input type="number" step="1" min="0" id="goalTarget" class="form-control" placeholder="5000">
+              <span class="field-error" id="err-goalTarget"></span>
+            </div>
+            <div class="form-group">
+              <label for="goalDeadline">Target date <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+              <input type="date" id="goalDeadline" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="goalIcon">Icon</label>
+            <select id="goalIcon" class="form-control">
+              <option value="🎯">🎯 Target</option>
+              <option value="🛟">🛟 Emergency fund</option>
+              <option value="✈️">✈️ Travel</option>
+              <option value="🏠">🏠 Home</option>
+              <option value="🚗">🚗 Vehicle</option>
+              <option value="💻">💻 Tech</option>
+              <option value="🎓">🎓 Education</option>
+              <option value="💍">💍 Milestone</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close-modal="goalModal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create goal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toastStack" class="toast-stack" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="js/finance.js"></script>
+  <script src="js/auth.js"></script>
   <script src="dashboard.js"></script>
 </body>
 </html>
