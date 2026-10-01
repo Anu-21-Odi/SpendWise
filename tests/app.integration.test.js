@@ -556,17 +556,36 @@ test('with Chart.js present, both charts are created and updated', async () => {
 });
 
 test('the trend chart is built from real monthly buckets, not invented multipliers', async () => {
-  const demo = demoFor(24680);
+  // dashboard.js buckets the trend window off its own live clock (`const now = () =>
+  // new Date()`), which has no test seam. Anchor the ledger to the real clock too,
+  // so buildDemoData() fills exactly the six buckets the chart renders. Using the
+  // pinned FIXED_NOW here instead made this test rot: its hardcoded
+  // ['Apr'...'Sep'] labels went stale the moment the calendar moved past them.
+  const realNow = new Date();
+  const demo = F.buildDemoData(24680, realNow);
   const { window } = await boot({ transactions: demo.transactions }, { withCharts: true });
 
   const trend = window.__charts.find((c) => c.options.scales);
   assert.ok(trend, 'trend chart not found');
 
-  const expected = F.monthlySeries(demo.transactions, 6, FIXED_NOW);
+  const expected = F.monthlySeries(demo.transactions, 6, realNow);
 
   // Labels are the real month names derived from transaction dates.
-  assert.deepEqual(local(trend.data.labels), expected.labels);
-  assert.deepEqual(local(trend.data.labels), ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep']);
+  const labels = local(trend.data.labels);
+  assert.deepEqual(labels, expected.labels);
+
+  // Structurally assert what the hardcoded list used to assert: six real,
+  // consecutive three-letter month names ending with the current month.
+  const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  assert.equal(labels.length, 6, 'trend chart should render six monthly buckets');
+  labels.forEach((l) => assert.ok(
+    MONTH_NAMES.includes(l), `not a real month label: ${l}`
+  ));
+  assert.equal(
+    labels[labels.length - 1], MONTH_NAMES[realNow.getMonth()],
+    'the trend window should end with the current month'
+  );
 
   // Offline the rate is 1:1, so display values equal the stored USD values.
   assert.deepEqual(local(trend.data.datasets[0].data), expected.income);
@@ -578,7 +597,10 @@ test('the trend chart is built from real monthly buckets, not invented multiplie
   const income = local(trend.data.datasets[0].data);
   const isMonotonic = income.every((v, i) => i === 0 || v >= income[i - 1]);
   assert.equal(isMonotonic, false, 'income series looks like the old fabricated ramp');
-  assert.notEqual(income[0], 0, 'April should have real income, not a padded zero');
+  assert.notEqual(
+    income[0], 0,
+    'the oldest bucket should have real income, not a padded zero'
+  );
 });
 
 test('the donut chart uses real categories with their configured colours', async () => {
